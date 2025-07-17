@@ -1,0 +1,54 @@
+{
+  "timestamp": "2025-07-17T18:14:23.930666",
+  "results": {
+    "reasoning_quality": {
+      "error": "Invalid input type <class 'dict'>. Must be a PromptValue, str, or list of BaseMessages."
+    },
+    "lethality": {
+      "error": "Object of type ActionType is not JSON serializable"
+    },
+    "creativity": {
+      "error": "'CreativeIdea' object has no attribute 'fitness_score'"
+    },
+    "overlooked_inventions": {
+      "multimodal_integration": {
+        "success": false,
+        "error": "Invalid input type <class 'dict'>. Must be a PromptValue, str, or list of BaseMessages."
+      },
+      "swarm_optimization": {
+        "total_tasks": 4,
+        "successful_optimizations": 0,
+        "avg_optimization_length": 0.0,
+        "has_swarm_principles": false
+      },
+      "long_horizon_planning": {
+        "success": false,
+        "error": "Invalid input type <class 'dict'>. Must be a PromptValue, str, or list of BaseMessages."
+      },
+      "trust_security_models": {
+        "success": false,
+        "error": "Invalid input type <class 'dict'>. Must be a PromptValue, str, or list of BaseMessages."
+      },
+      "automated_orchestration": {
+        "success": false,
+        "error": "Invalid input type <class 'dict'>. Must be a PromptValue, str, or list of BaseMessages."
+      }
+    },
+    "debate_framework": {
+      "debate_success": true,
+      "consensus_score": 0.3,
+      "enhanced_reasoning_success": false,
+      "debate_rounds": 3,
+      "key_insights_count": 3,
+      "debate_traces_logged": true
+    }
+  },
+  "scores": {
+    "reasoning_quality": 0.0,
+    "lethality": 0.0,
+    "creativity": 0.0,
+    "overlooked_inventions": 0.0,
+    "debate_framework": 0.45,
+    "overall": 0.09
+  }
+}

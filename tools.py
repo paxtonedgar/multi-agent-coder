@@ -3,15 +3,22 @@ LangChain tools for research and build operations
 """
 
 import os
+import sys
 import json
+import glob
+import ast
+import argparse
+import asyncio
 import subprocess
 import tempfile
-import requests
-import glob
 import shutil
-import git
-from typing import Dict, List, Any, Optional
-from datetime import datetime
+import datetime
+from typing import Dict, List, Any, Tuple, Optional
+import requests
+import numpy as np
+import traceback
+import tomllib  # Python 3.11+ for TOML parsing
+import re
 from pathlib import Path
 
 from langchain.tools import tool
@@ -335,12 +342,15 @@ Recent Commits:
 # ==================== RESEARCH TOOLS ====================
 
 class RealResearchTools:
-    """Production-ready research tools with X integration"""
+    """Enhanced research tools with GitHub content extraction"""
     
     def __init__(self, project_memory: ProjectBrain):
         self.memory = project_memory
         self.github_token = os.getenv("GITHUB_TOKEN", "")
-        
+        self.session = requests.Session()
+        if self.github_token:
+            self.session.headers.update({"Authorization": f"token {self.github_token}"})
+    
     def web_search_integration(self, query: str) -> str:
         """Enhanced web search with multiple sources"""
         print(f"🔍 Searching: {query}")
@@ -534,6 +544,439 @@ ADAPT TO YOUR PROJECT:
             except Exception as e:
                 return f"Analysis failed: {e}"
     
+    def extract_github_content(self, repo_url: str, content_types: List[str] = None) -> List[Dict]:
+        """Extract prompt-output pairs from GitHub repository content."""
+        if content_types is None:
+            content_types = ['issues', 'prs', 'notebooks', 'readme', 'examples']
+        
+        repo_parts = repo_url.rstrip('/').split('/')
+        if len(repo_parts) < 2:
+            return []
+        
+        owner, repo_name = repo_parts[-2], repo_parts[-1]
+        examples = []
+        rate_limited = False
+        
+        try:
+            # Extract from issues
+            if 'issues' in content_types and not rate_limited:
+                try:
+                    issue_examples = self._extract_issue_examples(owner, repo_name)
+                    examples.extend(issue_examples)
+                    print(f"Extracted {len(issue_examples)} examples from issues")
+                except Exception as e:
+                    if "rate limit" in str(e).lower():
+                        rate_limited = True
+                        print("GitHub API rate limit reached, skipping remaining content types")
+                    else:
+                        print(f"Error extracting issues: {e}")
+            
+            # Extract from PRs
+            if 'prs' in content_types and not rate_limited:
+                try:
+                    pr_examples = self._extract_pr_examples(owner, repo_name)
+                    examples.extend(pr_examples)
+                    print(f"Extracted {len(pr_examples)} examples from PRs")
+                except Exception as e:
+                    if "rate limit" in str(e).lower():
+                        rate_limited = True
+                        print("GitHub API rate limit reached, skipping remaining content types")
+                    else:
+                        print(f"Error extracting PRs: {e}")
+            
+            # Extract from notebooks
+            if 'notebooks' in content_types and not rate_limited:
+                try:
+                    notebook_examples = self._extract_notebook_examples(owner, repo_name)
+                    examples.extend(notebook_examples)
+                    print(f"Extracted {len(notebook_examples)} examples from notebooks")
+                except Exception as e:
+                    if "rate limit" in str(e).lower():
+                        rate_limited = True
+                        print("GitHub API rate limit reached, skipping remaining content types")
+                    else:
+                        print(f"Error extracting notebooks: {e}")
+            
+            # Extract from README and examples
+            if ('readme' in content_types or 'examples' in content_types) and not rate_limited:
+                try:
+                    readme_examples = self._extract_readme_examples(owner, repo_name)
+                    examples.extend(readme_examples)
+                    print(f"Extracted {len(readme_examples)} examples from README/examples")
+                except Exception as e:
+                    if "rate limit" in str(e).lower():
+                        rate_limited = True
+                        print("GitHub API rate limit reached, skipping remaining content types")
+                    else:
+                        print(f"Error extracting README/examples: {e}")
+            
+            # Cache in memory
+            if 'github_content_examples' not in self.memory.memory:
+                self.memory.memory['github_content_examples'] = []
+            self.memory.memory['github_content_examples'].extend(examples)
+            self.memory._save()
+            
+            return examples
+            
+        except Exception as e:
+            print(f"Error extracting content from {repo_url}: {e}")
+            return []
+    
+    def _extract_issue_examples(self, owner: str, repo_name: str) -> List[Dict]:
+        """Extract prompt-output pairs from GitHub issues."""
+        examples = []
+        
+        try:
+            # Get issues with labels that indicate examples/tutorials
+            labels = ['example', 'tutorial', 'documentation', 'enhancement', 'feature']
+            
+            for label in labels:
+                response = self.session.get(
+                    f"https://api.github.com/repos/{owner}/{repo_name}/issues",
+                    params={
+                        'state': 'all',
+                        'labels': label,
+                        'per_page': 10,
+                        'sort': 'updated',
+                        'direction': 'desc'
+                    },
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    issues = response.json()
+                    
+                    for issue in issues:
+                        # Skip pull requests
+                        if 'pull_request' in issue:
+                            continue
+                        
+                        # Extract task from title and description
+                        task = issue['title']
+                        description = issue.get('body', '')
+                        
+                        # Look for code blocks in description
+                        code_blocks = re.findall(r'```(?:python|py|js|javascript|json)?\n(.*?)\n```', 
+                                               description, re.DOTALL)
+                        
+                        if code_blocks:
+                            for code_block in code_blocks[:2]:  # Limit to 2 code blocks per issue
+                                if len(code_block.strip()) > 50:  # Minimum code length
+                                    examples.append({
+                                        'task': f"Issue: {task}",
+                                        'results': code_block.strip(),
+                                        'source': f"GitHub Issue #{issue['number']}",
+                                        'url': issue['html_url']
+                                    })
+                        
+                        # If no code blocks, use the description as context
+                        elif len(description) > 100:
+                            examples.append({
+                                'task': f"Issue: {task}",
+                                'results': description[:500] + "..." if len(description) > 500 else description,
+                                'source': f"GitHub Issue #{issue['number']}",
+                                'url': issue['html_url']
+                            })
+                
+                # Rate limiting
+                if response.status_code == 403:
+                    print("GitHub API rate limit reached")
+                    break
+                    
+        except Exception as e:
+            print(f"Error extracting issue examples: {e}")
+        
+        return examples[:20]  # Limit total examples
+    
+    def _extract_pr_examples(self, owner: str, repo_name: str) -> List[Dict]:
+        """Extract prompt-output pairs from GitHub pull requests."""
+        examples = []
+        
+        try:
+            response = self.session.get(
+                f"https://api.github.com/repos/{owner}/{repo_name}/pulls",
+                params={
+                    'state': 'all',
+                    'per_page': 10,
+                    'sort': 'updated',
+                    'direction': 'desc'
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                prs = response.json()
+                
+                for pr in prs:
+                    # Get PR description
+                    description = pr.get('body', '')
+                    title = pr['title']
+                    
+                    # Look for code blocks in description
+                    code_blocks = re.findall(r'```(?:python|py|js|javascript|json)?\n(.*?)\n```', 
+                                           description, re.DOTALL)
+                    
+                    if code_blocks:
+                        for code_block in code_blocks[:2]:
+                            if len(code_block.strip()) > 50:
+                                examples.append({
+                                    'task': f"PR: {title}",
+                                    'results': code_block.strip(),
+                                    'source': f"GitHub PR #{pr['number']}",
+                                    'url': pr['html_url']
+                                })
+                    
+                    # Get file changes for code examples
+                    try:
+                        files_response = self.session.get(
+                            f"https://api.github.com/repos/{owner}/{repo_name}/pulls/{pr['number']}/files",
+                            timeout=10
+                        )
+                        
+                        if files_response.status_code == 200:
+                            files = files_response.json()
+                            
+                            for file in files[:3]:  # Limit to 3 files per PR
+                                if file['filename'].endswith('.py') and file.get('patch'):
+                                    # Extract the patch content
+                                    patch_content = file['patch']
+                                    if patch_content and len(patch_content) > 100:
+                                        examples.append({
+                                            'task': f"PR: {title} - {file['filename']}",
+                                            'results': patch_content,
+                                            'source': f"GitHub PR #{pr['number']} file change",
+                                            'url': pr['html_url']
+                                        })
+                    except Exception as e:
+                        print(f"Error getting PR files: {e}")
+                        pass  # Skip file changes if API fails
+                
+            elif response.status_code == 403:
+                print("GitHub API rate limit reached")
+                
+        except Exception as e:
+            print(f"Error extracting PR examples: {e}")
+        
+        return examples[:15]  # Limit total examples
+    
+    def _extract_notebook_examples(self, owner: str, repo_name: str) -> List[Dict]:
+        """Extract prompt-output pairs from Jupyter notebooks."""
+        examples = []
+        
+        try:
+            # Search for notebook files with different extensions
+            notebook_extensions = ['*.ipynb', '*.jupyter', '*.notebook']
+            
+            for ext in notebook_extensions:
+                try:
+                    response = self.session.get(
+                        "https://api.github.com/search/code",
+                        params={
+                            'q': f'repo:{owner}/{repo_name} filename:{ext}',
+                            'per_page': 5
+                        },
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        notebook_files = response.json().get('items', [])
+                        
+                        for notebook_file in notebook_files:
+                            try:
+                                # Get notebook content
+                                content_response = self.session.get(
+                                    notebook_file['url'],
+                                    timeout=10
+                                )
+                                
+                                if content_response.status_code == 200:
+                                    content = content_response.json()
+                                    
+                                    # Parse notebook cells
+                                    if 'content' in content:
+                                        notebook_content = content['content']
+                                        if isinstance(notebook_content, str):
+                                            # Handle base64 encoded content
+                                            import base64
+                                            try:
+                                                notebook_content = base64.b64decode(notebook_content).decode('utf-8')
+                                                notebook_data = json.loads(notebook_content)
+                                            except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                                                print(f"Error decoding notebook {notebook_file['name']}: {e}")
+                                                continue
+                                        else:
+                                            notebook_data = notebook_content
+                                        
+                                        # Extract cells
+                                        if 'cells' in notebook_data:
+                                            for cell in notebook_data['cells']:
+                                                if cell.get('cell_type') == 'code':
+                                                    # Handle different source formats
+                                                    source = cell.get('source', [])
+                                                    if isinstance(source, list):
+                                                        source = ''.join(source)
+                                                    elif isinstance(source, str):
+                                                        source = source
+                                                    else:
+                                                        continue
+                                                    
+                                                    outputs = cell.get('outputs', [])
+                                                    
+                                                    if source.strip() and len(source) > 50:
+                                                        # Create example from code cell
+                                                        task = f"Notebook cell: {notebook_file['name']}"
+                                                        results = source.strip()
+                                                        
+                                                        # Add output if available
+                                                        if outputs:
+                                                            output_text = []
+                                                            for output in outputs:
+                                                                if 'text' in output:
+                                                                    text = output['text']
+                                                                    if isinstance(text, list):
+                                                                        text = ''.join(text)
+                                                                    output_text.append(text)
+                                                                elif 'data' in output and 'text/plain' in output['data']:
+                                                                    text = output['data']['text/plain']
+                                                                    if isinstance(text, list):
+                                                                        text = ''.join(text)
+                                                                    output_text.append(text)
+                                                            
+                                                            if output_text:
+                                                                results += f"\n\n# Output:\n" + '\n'.join(output_text)
+                                                        
+                                                        examples.append({
+                                                            'task': task,
+                                                            'results': results,
+                                                            'source': f"Jupyter Notebook: {notebook_file['name']}",
+                                                            'url': notebook_file['html_url']
+                                                        })
+                                                        
+                                                        if len(examples) >= 5:  # Limit per notebook
+                                                            break
+                            
+                            except Exception as e:
+                                print(f"Error processing notebook {notebook_file['name']}: {e}")
+                                continue
+                    
+                    elif response.status_code == 403:
+                        print("GitHub API rate limit reached for notebook search")
+                        break
+                        
+                except Exception as e:
+                    print(f"Error searching for {ext} files: {e}")
+                    continue
+                
+            # Also search for notebooks in common directories
+            notebook_dirs = ['notebooks', 'examples', 'tutorials', 'docs']
+            for dir_name in notebook_dirs:
+                try:
+                    response = self.session.get(
+                        "https://api.github.com/search/code",
+                        params={
+                            'q': f'repo:{owner}/{repo_name} path:{dir_name} filename:*.ipynb',
+                            'per_page': 3
+                        },
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        additional_files = response.json().get('items', [])
+                        # Process these files similarly to above
+                        # (simplified to avoid code duplication)
+                        
+                except Exception as e:
+                    print(f"Error searching in {dir_name}: {e}")
+                    continue
+                
+        except Exception as e:
+            print(f"Error extracting notebook examples: {e}")
+        
+        return examples[:20]  # Limit total examples
+    
+    def _extract_readme_examples(self, owner: str, repo_name: str) -> List[Dict]:
+        """Extract prompt-output pairs from README and example files."""
+        examples = []
+        
+        try:
+            # Get README content
+            readme_response = self.session.get(
+                f"https://api.github.com/repos/{owner}/{repo_name}/readme",
+                timeout=10
+            )
+            
+            if readme_response.status_code == 200:
+                readme_data = readme_response.json()
+                
+                # Decode content
+                import base64
+                readme_content = base64.b64decode(readme_data['content']).decode('utf-8')
+                
+                # Extract code blocks and their descriptions
+                code_blocks = re.findall(r'```(?:python|py|js|javascript|json)?\n(.*?)\n```', 
+                                       readme_content, re.DOTALL)
+                
+                # Find headers that might describe the code
+                headers = re.findall(r'^#{1,3}\s+(.+?)$', readme_content, re.MULTILINE)
+                
+                # Pair headers with code blocks
+                for i, code_block in enumerate(code_blocks[:10]):
+                    if len(code_block.strip()) > 50:
+                        task = f"README Example"
+                        if i < len(headers):
+                            task = f"README: {headers[i].strip()}"
+                        
+                        examples.append({
+                            'task': task,
+                            'results': code_block.strip(),
+                            'source': f"README: {repo_name}",
+                            'url': readme_data['html_url']
+                        })
+            
+            # Search for example files
+            example_response = self.session.get(
+                "https://api.github.com/search/code",
+                params={
+                    'q': f'repo:{owner}/{repo_name} filename:example*.py OR filename:demo*.py OR filename:sample*.py',
+                    'per_page': 5
+                },
+                timeout=10
+            )
+            
+            if example_response.status_code == 200:
+                example_files = example_response.json().get('items', [])
+                
+                for example_file in example_files:
+                    try:
+                        content_response = self.session.get(
+                            example_file['url'],
+                            timeout=10
+                        )
+                        
+                        if content_response.status_code == 200:
+                            content_data = content_response.json()
+                            file_content = base64.b64decode(content_data['content']).decode('utf-8')
+                            
+                            if len(file_content) > 100:
+                                examples.append({
+                                    'task': f"Example: {example_file['name']}",
+                                    'results': file_content,
+                                    'source': f"Example file: {example_file['name']}",
+                                    'url': example_file['html_url']
+                                })
+                    
+                    except Exception as e:
+                        print(f"Error processing example file {example_file['name']}: {e}")
+                        continue
+                
+            elif example_response.status_code == 403:
+                print("GitHub API rate limit reached")
+                
+        except Exception as e:
+            print(f"Error extracting README examples: {e}")
+        
+        return examples[:15]  # Limit total examples
+    
     def _analyze_repo_structure(self, repo_path: str) -> Dict[str, Any]:
         """Analyze repository structure"""
         structure = {
@@ -629,72 +1072,99 @@ ADAPT TO YOUR PROJECT:
         return sorted(list(deps))
     
     def _parse_requirements(self, content: str) -> set:
-        """Parse requirements.txt"""
+        """Parse requirements.txt using regex for cleaner extraction"""
         deps = set()
+        # Regex to match package names with version constraints
+        pkg_pattern = r'^([a-zA-Z0-9_-]+)(?:[<>=!~].*)?$'
+        
         for line in content.split('\n'):
             line = line.strip()
             if line and not line.startswith('#'):
-                # Extract package name
-                pkg = line.split('==')[0].split('>=')[0].split('<=')[0].split('[')[0].strip()
-                if pkg:
-                    deps.add(pkg)
+                match = re.match(pkg_pattern, line)
+                if match:
+                    deps.add(match.group(1))
         return deps
     
     def _parse_pyproject(self, content: str) -> set:
-        """Parse pyproject.toml - basic parsing"""
+        """Parse pyproject.toml using tomllib"""
         deps = set()
-        in_deps = False
-        for line in content.split('\n'):
-            if '[tool.poetry.dependencies]' in line:
-                in_deps = True
-            elif '[' in line:
-                in_deps = False
-            elif in_deps and '=' in line:
-                pkg = line.split('=')[0].strip().strip('"')
-                if pkg and pkg != 'python':
-                    deps.add(pkg)
+        try:
+            data = tomllib.loads(content)
+            # Extract dependencies from various possible locations
+            if 'tool' in data and 'poetry' in data['tool']:
+                poetry_deps = data['tool']['poetry'].get('dependencies', {})
+                deps.update(poetry_deps.keys())
+            if 'project' in data and 'dependencies' in data['project']:
+                deps.update(data['project']['dependencies'])
+        except Exception:
+            # Fallback to basic parsing if tomllib fails
+            in_deps = False
+            for line in content.split('\n'):
+                if '[tool.poetry.dependencies]' in line:
+                    in_deps = True
+                elif '[' in line:
+                    in_deps = False
+                elif in_deps and '=' in line:
+                    pkg = line.split('=')[0].strip().strip('"')
+                    if pkg and pkg != 'python':
+                        deps.add(pkg)
         return deps
     
     def _parse_setup_py(self, content: str) -> set:
-        """Parse setup.py - basic extraction"""
+        """Parse setup.py using ast for safer extraction"""
         deps = set()
-        if 'install_requires' in content:
-            # Simple parsing
-            start = content.find('install_requires')
-            if start > -1:
-                bracket_start = content.find('[', start)
-                bracket_end = content.find(']', bracket_start)
-                if bracket_start > -1 and bracket_end > -1:
-                    requires_section = content[bracket_start+1:bracket_end]
-                    for item in requires_section.split(','):
-                        pkg = item.strip().strip('"').strip("'").split('>=')[0].split('==')[0]
-                        if pkg:
-                            deps.add(pkg)
+        try:
+            tree = ast.parse(content)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call) and hasattr(node.func, 'id') and node.func.id == 'setup':
+                    for keyword in node.keywords:
+                        if keyword.arg == 'install_requires':
+                            if isinstance(keyword.value, ast.List):
+                                for item in keyword.value.elts:
+                                    if isinstance(item, ast.Constant):
+                                        pkg = item.value.split('>=')[0].split('==')[0].split('<=')[0]
+                                        deps.add(pkg)
+        except Exception:
+            # Fallback to basic parsing
+            if 'install_requires' in content:
+                start = content.find('install_requires')
+                if start > -1:
+                    bracket_start = content.find('[', start)
+                    bracket_end = content.find(']', bracket_start)
+                    if bracket_start > -1 and bracket_end > -1:
+                        requires_section = content[bracket_start+1:bracket_end]
+                        for item in requires_section.split(','):
+                            pkg = item.strip().strip('"').strip("'").split('>=')[0].split('==')[0]
+                            if pkg:
+                                deps.add(pkg)
         return deps
     
     def _parse_pipfile(self, content: str) -> set:
-        """Parse Pipfile"""
+        """Parse Pipfile using regex for cleaner extraction"""
         deps = set()
+        # Regex to match package definitions in Pipfile
+        pkg_pattern = r'^([a-zA-Z0-9_-]+)\s*=\s*["\']?[^"\']*["\']?$'
+        
         in_packages = False
         for line in content.split('\n'):
             if '[packages]' in line:
                 in_packages = True
             elif '[' in line:
                 in_packages = False
-            elif in_packages and '=' in line:
-                pkg = line.split('=')[0].strip()
-                if pkg:
-                    deps.add(pkg)
+            elif in_packages:
+                match = re.match(pkg_pattern, line.strip())
+                if match:
+                    deps.add(match.group(1))
         return deps
     
     def _parse_package_json(self, content: str) -> set:
-        """Parse package.json"""
+        """Parse package.json using json module"""
         deps = set()
         try:
             data = json.loads(content)
             deps.update(data.get('dependencies', {}).keys())
             deps.update(data.get('devDependencies', {}).keys())
-        except:
+        except Exception:
             pass
         return deps
     
@@ -766,17 +1236,16 @@ class BuildTools:
         return results
     
     def _parse_poetry_tree(self, output: str) -> List[str]:
-        """Parse poetry show --tree output"""
+        """Parse poetry show --tree output using regex"""
         deps = []
+        # Regex to extract package names from tree output
+        pkg_pattern = r'^[├└│\s]*([a-zA-Z0-9_-]+)'
+        
         for line in output.split('\n'):
             if line.strip():
-                # Extract package name from tree output
-                clean_line = line.replace('├──', '').replace('└──', '').replace('│', '').strip()
-                if clean_line:
-                    parts = clean_line.split()
-                    if parts:
-                        pkg_name = parts[0]
-                        deps.append(pkg_name)
+                match = re.match(pkg_pattern, line)
+                if match:
+                    deps.append(match.group(1))
         return list(set(deps))  # Unique
     
     def run_linter(self, files: List[str] = None, auto_fix: bool = False) -> Dict[str, Any]:
@@ -861,6 +1330,27 @@ def create_research_tools(brain: ProjectBrain):
     def analyze_github_repo(repo_url: str) -> str:
         """Deep analysis of a GitHub repository"""
         return research_tools.analyze_github_repo(repo_url)
+    
+    @tool
+    def extract_github_content(repo_url: str, content_types: str = "issues,prs,notebooks,readme,examples") -> str:
+        """Extract prompt-output pairs from GitHub repository content (issues, PRs, notebooks, README, examples)."""
+        content_types_list = [ct.strip() for ct in content_types.split(',')]
+        examples = research_tools.extract_github_content(repo_url, content_types_list)
+        
+        if examples:
+            # Format results for display
+            result = f"Extracted {len(examples)} examples from {repo_url}:\n\n"
+            for i, example in enumerate(examples[:5], 1):  # Show first 5
+                result += f"{i}. {example['task']}\n"
+                result += f"   Source: {example['source']}\n"
+                result += f"   URL: {example['url']}\n\n"
+            
+            if len(examples) > 5:
+                result += f"... and {len(examples) - 5} more examples\n"
+            
+            return result
+        else:
+            return f"No examples found in {repo_url}"
     
     @tool
     def remember_decision(decision: str, reasoning: str, context: str = "") -> str:
@@ -969,6 +1459,7 @@ def create_research_tools(brain: ProjectBrain):
         x_search,
         github_search,
         analyze_github_repo,
+        extract_github_content,
         remember_decision,
         find_relevant_files,
         analyze_dependencies,

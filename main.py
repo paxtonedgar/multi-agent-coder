@@ -1,273 +1,201 @@
 #!/usr/bin/env python3
 """
-LangGraph Multi-Agent Coding System - Main Entry Point
+Main entry point for the multi-agent coding system
+Enhanced with HF routing and dynamic model selection
 """
 
 import os
 import sys
-import json
 import argparse
-from typing import Dict, Any
+import asyncio
+from typing import Optional
 
 from memory import ProjectBrain
 from graph import run_workflow
-from dotenv import load_dotenv
-load_dotenv()
-
-# ==================== UTILITY FUNCTIONS ====================
-
-def analyze_project_context() -> Dict[str, Any]:
-    """Analyze current project context"""
-    context = {
-        'python_version': f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
-        'working_directory': os.getcwd(),
-        'has_git': os.path.exists('.git'),
-        'has_requirements': os.path.exists('requirements.txt'),
-        'has_pyproject': os.path.exists('pyproject.toml'),
-        'has_venv': any(os.path.exists(venv) for venv in ['.venv', 'venv', 'env']),
-        'api_keys': {
-            'openai': bool(os.getenv("OPENAI_API_KEY")),
-            'anthropic': bool(os.getenv("ANTHROPIC_API_KEY")),
-            'github': bool(os.getenv("GITHUB_TOKEN"))
-        }
-    }
-    
-    # Check for common project files
-    project_files = [
-        'README.md', 'setup.py', 'Pipfile', 'poetry.lock',
-        'Dockerfile', '.dockerignore', 'docker-compose.yml',
-        '.github/workflows', '.gitignore', 'Makefile'
-    ]
-    
-    context['project_files'] = {
-        file: os.path.exists(file) for file in project_files
-    }
-    
-    return context
-
-def print_banner():
-    """Print system banner"""
-    banner = """
-╔══════════════════════════════════════════════════════════════╗
-║                LangGraph Multi-Agent Coder                   ║
-║                        v2025.1.0                             ║
-║                                                              ║
-║  Research • Plan • Code • Review • Deploy                   ║
-║                                                              ║
-║  Powered by LangGraph, OpenAI GPT-4o, Claude 3.5 Sonnet     ║
-╚══════════════════════════════════════════════════════════════╝
-"""
-    print(banner)
-
-def print_context(context: Dict[str, Any]):
-    """Print project context"""
-    print("📋 Project Context:")
-    print(f"   Python: {context['python_version']}")
-    print(f"   Directory: {context['working_directory']}")
-    print(f"   Git: {'✅' if context['has_git'] else '❌'}")
-    print(f"   Virtual Env: {'✅' if context['has_venv'] else '❌'}")
-    
-    print("\n🔑 API Keys:")
-    for provider, has_key in context['api_keys'].items():
-        status = "✅" if has_key else "❌"
-        print(f"   {provider.title()}: {status}")
-    
-    print("\n📁 Project Files:")
-    for file, exists in context['project_files'].items():
-        status = "✅" if exists else "❌"
-        print(f"   {file}: {status}")
-
-def print_workflow_result(result: Dict[str, Any]):
-    """Print workflow execution result"""
-    if result['success']:
-        print("\n🎉 Workflow completed successfully!")
-        
-        # Print summary
-        print(f"\n📊 Summary:")
-        print(f"   Research sources: {len(result.get('research_results', []))}")
-        print(f"   Code files: {len(result.get('code_files', []))}")
-        print(f"   Review feedback: {len(result.get('review_feedback', []))}")
-        
-        # Print deployment status
-        deployment = result.get('deployment_status', {})
-        if deployment:
-            print(f"   Deployment: {deployment.get('status', 'unknown')}")
-        
-        # Print final messages
-        messages = result.get('messages', [])
-        if messages:
-            print(f"\n💬 Final Messages:")
-            for msg in messages[-3:]:  # Last 3 messages
-                if isinstance(msg, dict):
-                    role = msg.get('role', 'unknown')
-                    content = msg.get('content', '')[:200]
-                    print(f"   {role}: {content}...")
-        
-    else:
-        print(f"\n❌ Workflow failed: {result.get('error', 'Unknown error')}")
-
-# ==================== MAIN FUNCTIONS ====================
-
-def run_init_mode():
-    """Initialize project brain"""
-    print("🧠 Initializing project brain...")
-    
-    brain = ProjectBrain(".")
-    result = brain.update_codebase_understanding()
-    
-    print(f"✅ {result}")
-    print(f"📁 Brain saved to: {brain.brain_file}")
-    
-    # Print brain stats
-    memory = brain.memory
-    print(f"\n📊 Brain Statistics:")
-    print(f"   Files analyzed: {len(memory.get('codebase_map', {}))}")
-    print(f"   Functions mapped: {len(memory.get('function_graph', {}))}")
-    print(f"   Decisions recorded: {len(memory.get('decisions', []))}")
-    print(f"   GitHub examples: {len(memory.get('github_examples', []))}")
-
-def run_workflow_mode(task: str, mode: str, reference: str = None):
-    """Run the main workflow"""
-    print(f"🚀 Starting {mode} workflow...")
-    print(f"📝 Task: {task}")
-    
-    # Initialize brain
-    brain = ProjectBrain(".")
-    
-    # Add learning context if requested
-    if reference:
-        print(f"📚 Learning from reference: {reference}")
-        # This would integrate with the research tools
-        task += f"\n\nReference repository: {reference}"
-    
-    # Run workflow
-    result = run_workflow(task, brain, mode)
-    
-    # Print results
-    print_workflow_result(result)
-    
-    return result
-
-def run_research_mode(task: str, reference: str = None):
-    """Run research-only mode"""
-    print(f"🔍 Starting research mode...")
-    print(f"📝 Research topic: {task}")
-    
-    # Initialize brain
-    brain = ProjectBrain(".")
-    
-    # Add reference context
-    if reference:
-        task += f"\n\nReference repository: {reference}"
-    
-    # Run research workflow
-    result = run_workflow(task, brain, "research_only")
-    
-    # Print research results
-    if result['success']:
-        research_results = result.get('research_results', [])
-        print(f"\n📚 Research Results ({len(research_results)} sources):")
-        
-        for i, research in enumerate(research_results, 1):
-            source = research.get('source', 'unknown')
-            content = research.get('content', '')[:300]
-            print(f"\n{i}. {source.upper()}:")
-            print(f"   {content}...")
-    
-    return result
-
-# ==================== CLI ENTRY ====================
 
 def main():
-    """Main CLI entry point"""
+    """Main entry point with enhanced CLI options"""
     parser = argparse.ArgumentParser(
-        description="LangGraph Multi-Agent Coding System",
+        description="Multi-Agent Coding System with HF Routing",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Initialize project brain
-  python main.py --init
+  # Basic usage
+  python main.py "Build a REST API with FastAPI"
   
-  # Full workflow
-  python main.py "Create a FastAPI web service for user management"
+  # Use specific HF model
+  python main.py "Solve complex math problem" --use-hf DeepSeek-V3
   
-  # Quick workflow (no research)
-  python main.py --quick "Add authentication to existing API"
+  # Auto-routing for reasoning tasks
+  python main.py "Implement advanced algorithm" --use-hf auto-reasoning
   
-  # Research only
-  python main.py --research-only "Best practices for edge deployment"
+  # Update model discovery
+  python main.py "Research latest AI models" --update-models
   
-  # Learn from GitHub repo
-  python main.py --learn-from github --reference "https://github.com/user/repo" "Implement similar features"
+  # Quick mode with HF routing
+  python main.py "Create simple web app" --mode quick --use-hf auto-reasoning
         """
     )
     
-    parser.add_argument("task", nargs="?", help="Task description")
-    parser.add_argument("--init", action="store_true", help="Initialize project brain")
-    parser.add_argument("--quick", action="store_true", help="Quick mode (no research)")
-    parser.add_argument("--research-only", action="store_true", help="Research only mode")
-    parser.add_argument("--learn-from", choices=["github", "web"], help="Learn from external sources")
-    parser.add_argument("--reference", help="Reference GitHub repository or URL")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    parser.add_argument(
+        "task",
+        help="The task to accomplish (e.g., 'Build a REST API')"
+    )
+    
+    parser.add_argument(
+        "--mode",
+        choices=["full", "quick", "research"],
+        default="full",
+        help="Workflow mode: full (default), quick, or research-only"
+    )
+    
+    parser.add_argument(
+        "--repo-url",
+        help="GitHub repository URL for integration"
+    )
+    
+    parser.add_argument(
+        "--use-hf",
+        help="Hugging Face model to use: 'auto-reasoning' (default), specific model name, or 'none'"
+    )
+    
+    parser.add_argument(
+        "--update-models",
+        action="store_true",
+        help="Force refresh of reasoning model discovery"
+    )
+    
+    parser.add_argument(
+        "--force-hf",
+        action="store_true",
+        help="Force routing to HF models for all tasks"
+    )
+    
+    parser.add_argument(
+        "--show-stats",
+        action="store_true",
+        help="Show HF routing statistics and exit"
+    )
+    
+    parser.add_argument(
+        "--list-models",
+        action="store_true",
+        help="List available reasoning models and exit"
+    )
     
     args = parser.parse_args()
     
-    # Print banner
-    print_banner()
+    # Initialize brain
+    brain = ProjectBrain()
     
-    # Check Python version
-    if sys.version_info < (3, 12):
-        print("⚠️  Warning: Python 3.12+ recommended for optimal performance")
+    # Handle special commands
+    if args.show_stats:
+        _show_routing_stats(brain)
+        return
     
-    # Analyze context
-    context = analyze_project_context()
-    if args.verbose:
-        print_context(context)
+    if args.list_models:
+        _list_available_models(brain)
+        return
     
-    # Check API keys
-    if not any(context['api_keys'].values()):
-        print("❌ No API keys found!")
-        print("Set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY")
-        print("Optional: GITHUB_TOKEN for enhanced research")
-        return 1
+    # Update models if requested
+    if args.update_models:
+        _update_model_discovery(brain)
+    
+    # Configure HF routing
+    if args.use_hf:
+        _configure_hf_routing(brain, args.use_hf, args.force_hf)
+    
+    # Run workflow
+    print(f"🚀 Starting {args.mode} workflow for: {args.task}")
+    print(f"📊 HF Routing: {args.use_hf or 'disabled'}")
     
     try:
-        # Handle --init
-        if args.init:
-            run_init_mode()
-            return 0
+        result = run_workflow(
+            task=args.task,
+            brain=brain,
+            mode=args.mode,
+            repo_url=args.repo_url or ""
+        )
         
-        # Check for task
-        if not args.task:
-            parser.print_help()
-            return 1
+        print("\n✅ Workflow completed successfully!")
+        print(f"📝 Final result: {result.get('final_result', 'No result available')}")
         
-        # Determine mode
-        if args.research_only:
-            mode = "research_only"
-        elif args.quick:
-            mode = "quick"
-        else:
-            mode = "full"
-        
-        # Run appropriate mode
-        if mode == "research_only":
-            result = run_research_mode(args.task, args.reference)
-        else:
-            result = run_workflow_mode(args.task, mode, args.reference)
-        
-        # Return appropriate exit code
-        return 0 if result['success'] else 1
-        
-    except KeyboardInterrupt:
-        print("\n⏹️  Cancelled by user")
-        return 1
     except Exception as e:
-        print(f"\n❌ Error: {e}")
-        if args.verbose:
-            import traceback
-            traceback.print_exc()
-        return 1
+        print(f"❌ Workflow failed: {e}")
+        sys.exit(1)
+
+def _show_routing_stats(brain: ProjectBrain):
+    """Show HF routing statistics"""
+    try:
+        from hf_routing import HFRoutingSystem
+        router = HFRoutingSystem(brain)
+        stats = router.get_routing_stats()
+        
+        print("📊 HF Routing Statistics:")
+        print(f"  Total routes: {stats['total_routes']}")
+        print(f"  Success rate: {stats['success_rate']:.2%}")
+        print(f"  Refusal rate: {stats['refusal_rate']:.2%}")
+        print(f"  Models used: {stats['models_used']}")
+        
+    except ImportError:
+        print("❌ HF routing not available")
+    except Exception as e:
+        print(f"❌ Error getting stats: {e}")
+
+def _list_available_models(brain: ProjectBrain):
+    """List available reasoning models"""
+    try:
+        from hf_routing import ReasoningModelDiscovery
+        discovery = ReasoningModelDiscovery(brain)
+        models = discovery.discover_reasoning_models()
+        
+        print("🤖 Available Reasoning Models:")
+        for i, model in enumerate(models[:10], 1):  # Show top 10
+            print(f"  {i}. {model.name}")
+            print(f"     Score: {model.reasoning_score:.2f}")
+            print(f"     Parameters: {model.parameters}B")
+            print(f"     Mac optimized: {'✅' if model.mac_optimized else '❌'}")
+            print(f"     Source: {model.source}")
+            print()
+        
+    except ImportError:
+        print("❌ HF routing not available")
+    except Exception as e:
+        print(f"❌ Error listing models: {e}")
+
+def _update_model_discovery(brain: ProjectBrain):
+    """Update model discovery cache"""
+    try:
+        from hf_routing import ReasoningModelDiscovery
+        discovery = ReasoningModelDiscovery(brain)
+        models = discovery.discover_reasoning_models(force_refresh=True)
+        print(f"✅ Updated model discovery: {len(models)} models found")
+        
+    except ImportError:
+        print("❌ HF routing not available")
+    except Exception as e:
+        print(f"❌ Error updating models: {e}")
+
+def _configure_hf_routing(brain: ProjectBrain, model_name: str, force_hf: bool):
+    """Configure HF routing settings"""
+    try:
+        # Store routing preferences in brain
+        brain.memory['hf_routing_config'] = {
+            'model_name': model_name,
+            'force_hf': force_hf,
+            'enabled': model_name != 'none'
+        }
+        brain._save()
+        
+        if model_name == 'none':
+            print("🚫 HF routing disabled")
+        elif model_name == 'auto-reasoning':
+            print("🤖 HF routing enabled with auto-reasoning")
+        else:
+            print(f"🤖 HF routing enabled with model: {model_name}")
+            
+    except Exception as e:
+        print(f"❌ Error configuring HF routing: {e}")
 
 if __name__ == "__main__":
-    sys.exit(main()) 
+    main() 
