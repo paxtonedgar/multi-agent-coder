@@ -1,14 +1,25 @@
 {
-  "timestamp": "2025-07-17T18:14:23.930666",
+  "timestamp": "2025-07-17T18:53:49.977429",
   "results": {
     "reasoning_quality": {
-      "error": "Invalid input type <class 'dict'>. Must be a PromptValue, str, or list of BaseMessages."
+      "reasoning_success": true,
+      "validation_scores_avg": 0,
+      "reflection_confidence": 0.5,
+      "quality_metrics_avg": 0.9666666666666667,
+      "traces_logged": true
     },
     "lethality": {
-      "error": "Object of type ActionType is not JSON serializable"
+      "actions_evaluated": 3,
+      "avg_utility_score": 0.855,
+      "high_utility_actions": 2,
+      "total_decisions": 3
     },
     "creativity": {
-      "error": "'CreativeIdea' object has no attribute 'fitness_score'"
+      "total_ideas_generated": 12,
+      "avg_novelty_score": 0.8421374776980218,
+      "avg_feasibility_score": 0.8120015114460916,
+      "high_novelty_count": 7,
+      "creativity_approaches_used": 4
     },
     "overlooked_inventions": {
       "multimodal_integration": {
@@ -36,19 +47,19 @@
     },
     "debate_framework": {
       "debate_success": true,
-      "consensus_score": 0.3,
-      "enhanced_reasoning_success": false,
+      "consensus_score": 0.7000000000000001,
+      "enhanced_reasoning_success": true,
       "debate_rounds": 3,
       "key_insights_count": 3,
       "debate_traces_logged": true
     }
   },
   "scores": {
-    "reasoning_quality": 0.0,
-    "lethality": 0.0,
-    "creativity": 0.0,
+    "reasoning_quality": 0.5933333333333334,
+    "lethality": 0.842,
+    "creativity": 0.7268549910792087,
     "overlooked_inventions": 0.0,
-    "debate_framework": 0.45,
-    "overall": 0.09
+    "debate_framework": 0.77,
+    "overall": 0.5864376648825085
   }
 }

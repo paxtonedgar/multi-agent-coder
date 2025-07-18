@@ -160,7 +160,7 @@ def get_openai_model():
 def get_anthropic_model():
     """Get Anthropic model with 2025 configuration"""
     return ChatAnthropic(
-        model="claude-3.5-sonnet-20241022",
+        model="claude-3-5-sonnet-20241022",
         temperature=0.3,
         timeout=120,
         api_key=os.getenv("ANTHROPIC_API_KEY")

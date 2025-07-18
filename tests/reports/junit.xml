@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="96" skipped="0" tests="152" time="2993.186" timestamp="2025-07-17T19:48:29.409793-04:00" hostname="Mac"><testcase classname="tests.test_agents.TestAgentCreation" name="test_create_all_agents" time="0.129"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:28: in test_create_all_agents
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_planner_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:42: in test_planner_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_coder_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:51: in test_coder_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_reviewer_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:60: in test_reviewer_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_integrator_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:69: in test_integrator_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_architect_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:78: in test_architect_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_coordinator_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:87: in test_coordinator_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_auditor_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:96: in test_auditor_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCreation" name="test_meta_agent_creation" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:105: in test_meta_agent_creation
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentInteractions" name="test_planner_agent_task" time="0.003"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:118: in test_planner_agent_task
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentInteractions" name="test_coder_agent_task" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:133: in test_coder_agent_task
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentInteractions" name="test_reviewer_agent_task" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:148: in test_reviewer_agent_task
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentInteractions" name="test_architect_agent_research" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:170: in test_architect_agent_research
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentInteractions" name="test_coordinator_agent_synthesis" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:185: in test_coordinator_agent_synthesis
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestReasoningAgent" name="test_reasoning_with_validation" time="66.964" /><testcase classname="tests.test_agents.TestReasoningAgent" name="test_parallel_reasoning_paths" time="15.305" /><testcase classname="tests.test_agents.TestReasoningAgent" name="test_reasoning_validation" time="10.530"><failure message="AssertionError: assert 'coherence_score' in {'confidence': 0.0, 'is_valid': False, 'score': 0.0}">tests/test_agents.py:244: in test_reasoning_validation
+    assert 'coherence_score' in validation
+E   AssertionError: assert 'coherence_score' in {'confidence': 0.0, 'is_valid': False, 'score': 0.0}</failure></testcase><testcase classname="tests.test_agents.TestReasoningAgent" name="test_self_reflection" time="10.439"><failure message="AssertionError: assert 'improvements' in {'confidence': 0.5, 'feedback': 'Reflection failed: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)', 'needs_revision': False}">tests/test_agents.py:260: in test_self_reflection
+    assert 'improvements' in reflection
+E   AssertionError: assert 'improvements' in {'confidence': 0.5, 'feedback': 'Reflection failed: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)', 'needs_revision': False}</failure></testcase><testcase classname="tests.test_agents.TestReasoningAgent" name="test_output_revision" time="7.333" /><testcase classname="tests.test_agents.TestReflectionAgent" name="test_output_critique" time="7.979"><failure message="assert 'strengths' in {'critical_issues': [&quot;content='1. **Correctness (1):** The function correctly implements the Fibonacci sequence. It returns the nth Fibonacci number by using the recursive formula: F(n) = F(n-1) + F(n-2), with base cases for n = 0 and n = 1.\\n\\n2. **Completeness (0.5):** While the function correctly calculates Fibonacci numbers, it does not address performance concerns, which are part of the task requirements. The recursive approach used here is not optimal for large n due to its exponential time complexity.\\n\\n3. **Code Quality (0.8):** The code is simple and easy to understand. It follows a clear recursive structure with appropriate base cases. However, it lacks comments or documentation that could help in understanding the performance implications or the choice of algorithm.\\n\\n4. **Executability (1):** The code can run without errors for small values of n. It correctly handles the base cases and the recursive calls.\\n\\n5. **Security (1):** There are no apparent security vulnerabilities in this code. It does not involve any user input or external data sources that could lead to security issues.\\n\\n6. **Performance (0):** The performance of this implementation is poor...ll significantly enhance performance.\\n- Alternatively, use dynamic programming to store results of subproblems, which can also improve efficiency.\\n- Add comments or documentation to explain the choice of algorithm and its implications on performance.\\n- Consider edge cases, such as negative inputs, and handle them appropriately within the function.' additional_kwargs={'refusal': None} response_metadata={'token_usage': {'completion_tokens': 403, 'prompt_tokens': 203, 'total_tokens': 606, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_07871e2ad8', 'id': 'chatcmpl-BuSejhoHVNJ5NDEG7xjWmwSDfxA7d', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None} id='run--6a613751-7bea-4734-859a-a9c6aa78b93c-0' usage_metadata={'input_tokens': 203, 'output_tokens': 403, 'total_tokens': 606, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}&quot;, 'needs_revision': True, 'overall_score': 0.7166666666666667, ...}">tests/test_agents.py:304: in test_output_critique
+    assert 'strengths' in critique
+E   assert 'strengths' in {'critical_issues': ["content='1. **Correctness (1):** The function correctly implements the Fibonacci sequence. It returns the nth Fibonacci number by using the recursive formula: F(n) = F(n-1) + F(n-2), with base cases for n = 0 and n = 1.\\n\\n2. **Completeness (0.5):** While the function correctly calculates Fibonacci numbers, it does not address performance concerns, which are part of the task requirements. The recursive approach used here is not optimal for large n due to its exponential time complexity.\\n\\n3. **Code Quality (0.8):** The code is simple and easy to understand. It follows a clear recursive structure with appropriate base cases. However, it lacks comments or documentation that could help in understanding the performance implications or the choice of algorithm.\\n\\n4. **Executability (1):** The code can run without errors for small values of n. It correctly handles the base cases and the recursive calls.\\n\\n5. **Security (1):** There are no apparent security vulnerabilities in this code. It does not involve any user input or external data sources that could lead to security issues.\\n\\n6. **Performance (0):** The performance of this implementation is poor...ll significantly enhance performance.\\n- Alternatively, use dynamic programming to store results of subproblems, which can also improve efficiency.\\n- Add comments or documentation to explain the choice of algorithm and its implications on performance.\\n- Consider edge cases, such as negative inputs, and handle them appropriately within the function.' additional_kwargs={'refusal': None} response_metadata={'token_usage': {'completion_tokens': 403, 'prompt_tokens': 203, 'total_tokens': 606, 'completion_tokens_details': {'accepted_prediction_tokens': 0, 'audio_tokens': 0, 'reasoning_tokens': 0, 'rejected_prediction_tokens': 0}, 'prompt_tokens_details': {'audio_tokens': 0, 'cached_tokens': 0}}, 'model_name': 'gpt-4o-2024-08-06', 'system_fingerprint': 'fp_07871e2ad8', 'id': 'chatcmpl-BuSejhoHVNJ5NDEG7xjWmwSDfxA7d', 'service_tier': 'default', 'finish_reason': 'stop', 'logprobs': None} id='run--6a613751-7bea-4734-859a-a9c6aa78b93c-0' usage_metadata={'input_tokens': 203, 'output_tokens': 403, 'total_tokens': 606, 'input_token_details': {'audio': 0, 'cache_read': 0}, 'output_token_details': {'audio': 0, 'reasoning': 0}}", 'needs_revision': True, 'overall_score': 0.7166666666666667, ...}</failure></testcase><testcase classname="tests.test_agents.TestReflectionAgent" name="test_critical_issues_extraction" time="0.004"><failure message="assert False&#10; +  where False = any(&lt;generator object TestReflectionAgent.test_critical_issues_extraction.&lt;locals&gt;.&lt;genexpr&gt; at 0x11ccefac0&gt;)">tests/test_agents.py:324: in test_critical_issues_extraction
+    assert any("validation" in issue.lower() for issue in issues)
+E   assert False
+E    +  where False = any(&lt;generator object TestReflectionAgent.test_critical_issues_extraction.&lt;locals&gt;.&lt;genexpr&gt; at 0x11ccefac0&gt;)</failure></testcase><testcase classname="tests.test_agents.TestAgentTools" name="test_agent_tools_availability" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:332: in test_agent_tools_availability
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentTools" name="test_tool_execution" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:343: in test_tool_execution
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentPerformance" name="test_agent_response_time" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:360: in test_agent_response_time
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentPerformance" name="test_agent_memory_usage" time="0.002"><failure message="ModuleNotFoundError: No module named 'psutil'">tests/test_agents.py:377: in test_agent_memory_usage
+    import psutil
+E   ModuleNotFoundError: No module named 'psutil'</failure></testcase><testcase classname="tests.test_agents.TestAgentErrorHandling" name="test_agent_api_error_handling" time="0.004"><failure message="TypeError: Can't instantiate abstract class ErrorLLM without an implementation for abstract method '_generate'">tests/test_agents.py:410: in test_agent_api_error_handling
+    with patch('agents.get_default_model', return_value=ErrorLLM()):
+                                                        ^^^^^^^^^^
+E   TypeError: Can't instantiate abstract class ErrorLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentErrorHandling" name="test_agent_invalid_input_handling" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:428: in test_agent_invalid_input_handling
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCollaboration" name="test_agent_chain_execution" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:455: in test_agent_chain_execution
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentCollaboration" name="test_agent_memory_sharing" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:487: in test_agent_memory_sharing
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentQuality" name="test_code_generation_quality" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:511: in test_code_generation_quality
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentQuality" name="test_planning_quality" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:529: in test_planning_quality
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentQuality" name="test_review_quality" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:547: in test_review_quality
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentReliability" name="test_agent_consistency" time="0.002"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:575: in test_agent_consistency
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_agents.TestAgentReliability" name="test_agent_state_persistence" time="0.001"><failure message="TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'">tests/test_agents.py:593: in test_agent_state_persistence
+    with patch('agents.get_default_model', return_value=MockLLM()):
+                                                        ^^^^^^^^^
+E   TypeError: Can't instantiate abstract class MockLLM without an implementation for abstract method '_generate'</failure></testcase><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_basic_task_execution" time="0.002" /><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_task_with_options" time="0.002" /><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_task_with_repository" time="0.002" /><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_help_request" time="0.002" /><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_stats_request" time="0.002"><failure message="SystemExit: 2">/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1937: in _parse_known_args2
+    namespace, args = self._parse_known_args(args, namespace, intermixed)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:2234: in _parse_known_args
+    raise ArgumentError(None, _('the following arguments are required: %s') %
+E   argparse.ArgumentError: the following arguments are required: task
+
+During handling of the above exception, another exception occurred:
+tests/test_cli.py:78: in test_stats_request
+    main()
+main.py:86: in main
+    args = parser.parse_args()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1898: in parse_args
+    args, argv = self.parse_known_args(args, namespace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1908: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1939: in _parse_known_args2
+    self.error(str(err))
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:2658: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:2645: in exit
+    _sys.exit(status)
+E   SystemExit: 2</failure></testcase><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_models_request" time="0.002"><failure message="SystemExit: 2">/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1937: in _parse_known_args2
+    namespace, args = self._parse_known_args(args, namespace, intermixed)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:2234: in _parse_known_args
+    raise ArgumentError(None, _('the following arguments are required: %s') %
+E   argparse.ArgumentError: the following arguments are required: task
+
+During handling of the above exception, another exception occurred:
+tests/test_cli.py:87: in test_models_request
+    main()
+main.py:86: in main
+    args = parser.parse_args()
+           ^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1898: in parse_args
+    args, argv = self.parse_known_args(args, namespace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1908: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:1939: in _parse_known_args2
+    self.error(str(err))
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:2658: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/argparse.py:2645: in exit
+    _sys.exit(status)
+E   SystemExit: 2</failure></testcase><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_update_models_flag" time="0.002" /><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_hf_routing_configuration" time="0.002" /><testcase classname="tests.test_cli.TestCLIEntryPoints" name="test_force_hf_flag" time="0.001" /><testcase classname="tests.test_cli.TestCLIErrorHandling" name="test_missing_task_argument" time="0.001" /><testcase classname="tests.test_cli.TestCLIErrorHandling" name="test_invalid_mode" time="0.001" /><testcase classname="tests.test_cli.TestCLIErrorHandling" name="test_workflow_failure" time="0.002" /><testcase classname="tests.test_cli.TestCLIErrorHandling" name="test_api_key_validation" time="0.002" /><testcase classname="tests.test_cli.TestCLISubprocess" name="test_cli_subprocess_basic" time="3.002" /><testcase classname="tests.test_cli.TestCLISubprocess" name="test_cli_subprocess_invalid_args" time="3.033" /><testcase classname="tests.test_cli.TestCLISubprocess" name="test_cli_subprocess_with_mock" time="133.180" /><testcase classname="tests.test_cli.TestCLIUserScenarios" name="test_user_scenario_workflow[simple_code_generation]" time="0.002" /><testcase classname="tests.test_cli.TestCLIUserScenarios" name="test_user_scenario_workflow[complex_project]" time="0.001" /><testcase classname="tests.test_cli.TestCLIUserScenarios" name="test_user_scenario_workflow[bug_fix]" time="0.001" /><testcase classname="tests.test_cli.TestCLIUserScenarios" name="test_multi_turn_interaction" time="0.003" /><testcase classname="tests.test_cli.TestCLIUserScenarios" name="test_iterative_refinement" time="0.003" /><testcase classname="tests.test_cli.TestCLIPerformance" name="test_cli_startup_time" time="0.001" /><testcase classname="tests.test_cli.TestCLIPerformance" name="test_cli_memory_usage" time="0.001"><failure message="ModuleNotFoundError: No module named 'psutil'">tests/test_cli.py:327: in test_cli_memory_usage
+    import psutil
+E   ModuleNotFoundError: No module named 'psutil'</failure></testcase><testcase classname="tests.test_cli.TestCLIIntegration" name="test_cli_with_hf_routing" time="0.002" /><testcase classname="tests.test_cli.TestCLIIntegration" name="test_cli_with_git_integration" time="0.176" /><testcase classname="tests.test_cli.TestCLIIntegration" name="test_cli_mode_selection" time="0.003" /><testcase classname="tests.test_memory.TestProjectBrain" name="test_brain_initialization" time="0.001" /><testcase classname="tests.test_memory.TestProjectBrain" name="test_brain_persistence" time="0.001" /><testcase classname="tests.test_memory.TestProjectBrain" name="test_brain_memory_structure" time="0.001" /><testcase classname="tests.test_memory.TestProjectBrain" name="test_brain_embedding_creation" time="0.001"><failure message="AttributeError: &lt;module 'memory' from '/Users/PaxtonEdgar/Projects/multi-agent-coder/memory.py'&gt; does not have the attribute '_create_embedding'">tests/test_memory.py:69: in test_brain_embedding_creation
+    with patch('memory._create_embedding') as mock_embedding:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1467: in get_original
+    raise AttributeError(
+E   AttributeError: &lt;module 'memory' from '/Users/PaxtonEdgar/Projects/multi-agent-coder/memory.py'&gt; does not have the attribute '_create_embedding'</failure></testcase><testcase classname="tests.test_memory.TestProjectBrain" name="test_brain_file_operations" time="0.654" /><testcase classname="tests.test_memory.TestProjectBrain" name="test_brain_decision_memory" time="0.260" /><testcase classname="tests.test_memory.TestMemoryNodes" name="test_memory_node_creation" time="0.252" /><testcase classname="tests.test_memory.TestMemoryNodes" name="test_memory_node_types" time="2.714" /><testcase classname="tests.test_memory.TestMemoryNodes" name="test_memory_node_hierarchy" time="1.807" /><testcase classname="tests.test_memory.TestMemoryNodes" name="test_memory_node_serialization" time="0.002" /><testcase classname="tests.test_memory.TestReflectionSystem" name="test_add_reflection" time="0.305"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])">tests/test_memory.py:229: in test_add_reflection
+    assert len(temp_brain.memory['reflections']) &gt; 0
+E   assert 0 &gt; 0
+E    +  where 0 = len([])</failure></testcase><testcase classname="tests.test_memory.TestReflectionSystem" name="test_refine_reflection" time="0.599"><failure message="assert 0 &gt; 1&#10; +  where 0 = len([])">tests/test_memory.py:257: in test_refine_reflection
+    assert len(temp_brain.memory['reflections']) &gt; 1
+E   assert 0 &gt; 1
+E    +  where 0 = len([])</failure></testcase><testcase classname="tests.test_memory.TestReflectionSystem" name="test_reflection_tree_retrieval" time="1.511" /><testcase classname="tests.test_memory.TestReflectionSystem" name="test_reflection_evolution_tracking" time="1.679" /><testcase classname="tests.test_memory.TestStateManagement" name="test_agent_state_creation" time="0.001" /><testcase classname="tests.test_memory.TestStateManagement" name="test_state_persistence" time="0.001"><failure message="TypeError: Object of type ProjectBrain is not JSON serializable">tests/test_memory.py:338: in test_state_persistence
+    temp_brain._save()
+memory.py:687: in _save
+    json.dump(self.memory, f, indent=2)
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py:179: in dump
+    for chunk in iterable:
+                 ^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:433: in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:407: in _iterencode_dict
+    yield from chunks
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:407: in _iterencode_dict
+    yield from chunks
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:407: in _iterencode_dict
+    yield from chunks
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:440: in _iterencode
+    o = _default(o)
+        ^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/encoder.py:180: in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+E   TypeError: Object of type ProjectBrain is not JSON serializable</failure></testcase><testcase classname="tests.test_memory.TestStateManagement" name="test_state_transitions" time="0.001" /><testcase classname="tests.test_memory.TestBrainCheckpoint" name="test_checkpoint_creation" time="0.001" /><testcase classname="tests.test_memory.TestBrainCheckpoint" name="test_checkpoint_get" time="0.001"><failure message="KeyError: 'configurable'">tests/test_memory.py:402: in test_checkpoint_get
+    result = checkpoint.get(config)
+             ^^^^^^^^^^^^^^^^^^^^^^
+memory.py:713: in get
+    return super().get(config)
+           ^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/checkpoint/base/__init__.py:149: in get
+    if value := self.get_tuple(config):
+                ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/checkpoint/memory/__init__.py:146: in get_tuple
+    thread_id: str = config["configurable"]["thread_id"]
+                     ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'configurable'</failure></testcase><testcase classname="tests.test_memory.TestBrainCheckpoint" name="test_checkpoint_put" time="0.001"><failure message="KeyError: 'configurable'">tests/test_memory.py:420: in test_checkpoint_put
+    checkpoint.put(config, value)
+memory.py:723: in put
+    super().put(config, value, metadata, new_versions)
+.venv/lib/python3.13/site-packages/langgraph/checkpoint/memory/__init__.py:345: in put
+    thread_id = config["configurable"]["thread_id"]
+                ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'configurable'</failure></testcase><testcase classname="tests.test_memory.TestMemoryPerformance" name="test_memory_usage" time="0.001"><failure message="ModuleNotFoundError: No module named 'psutil'">tests/test_memory.py:432: in test_memory_usage
+    import psutil
+E   ModuleNotFoundError: No module named 'psutil'</failure></testcase><testcase classname="tests.test_memory.TestMemoryPerformance" name="test_memory_retrieval_speed" time="21.432"><failure message="assert 2.083036184310913 &lt; 1.0">tests/test_memory.py:482: in test_memory_retrieval_speed
+    assert retrieval_time &lt; 1.0  # Less than 1 second for 10 retrievals
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   assert 2.083036184310913 &lt; 1.0</failure></testcase><testcase classname="tests.test_memory.TestMemoryPerformance" name="test_memory_persistence_speed" time="54.544" /><testcase classname="tests.test_memory.TestMemoryErrorHandling" name="test_invalid_node_type" time="0.351"><failure message="assert ('NodeType' in &quot;'str' object has no attribute 'value'&quot; or 'invalid' in &quot;'str' object has no attribute 'value'&quot;)&#10; +  where &quot;'str' object has no attribute 'value'&quot; = str(AttributeError(&quot;'str' object has no attribute 'value'&quot;))&#10; +  and   &quot;'str' object has no attribute 'value'&quot; = str(AttributeError(&quot;'str' object has no attribute 'value'&quot;))">tests/test_memory.py:511: in test_invalid_node_type
+    temp_brain.add_node(
+memory.py:192: in add_node
+    self.conversation_tree.add_node(node_id, **node.to_dict())
+                                               ^^^^^^^^^^^^^^
+memory.py:75: in to_dict
+    data['type'] = self.type.value
+                   ^^^^^^^^^^^^^^^
+E   AttributeError: 'str' object has no attribute 'value'
+
+During handling of the above exception, another exception occurred:
+tests/test_memory.py:518: in test_invalid_node_type
+    assert "NodeType" in str(e) or "invalid" in str(e)
+E   assert ('NodeType' in "'str' object has no attribute 'value'" or 'invalid' in "'str' object has no attribute 'value'")
+E    +  where "'str' object has no attribute 'value'" = str(AttributeError("'str' object has no attribute 'value'"))
+E    +  and   "'str' object has no attribute 'value'" = str(AttributeError("'str' object has no attribute 'value'"))</failure></testcase><testcase classname="tests.test_memory.TestMemoryErrorHandling" name="test_invalid_parent_id" time="0.509"><failure message="AssertionError: assert not True&#10; +  where True = has_edge('non-existent-id', 'a31bb7e0-fd13-4661-b14c-20ebc9f6dd96')&#10; +    where has_edge = &lt;networkx.classes.digraph.DiGraph object at 0x11e90ae00&gt;.has_edge&#10; +      where &lt;networkx.classes.digraph.DiGraph object at 0x11e90ae00&gt; = &lt;memory.ProjectBrain object at 0x11eb40ed0&gt;.conversation_tree">tests/test_memory.py:533: in test_invalid_parent_id
+    assert not temp_brain.conversation_tree.has_edge("non-existent-id", node_id)
+E   AssertionError: assert not True
+E    +  where True = has_edge('non-existent-id', 'a31bb7e0-fd13-4661-b14c-20ebc9f6dd96')
+E    +    where has_edge = &lt;networkx.classes.digraph.DiGraph object at 0x11e90ae00&gt;.has_edge
+E    +      where &lt;networkx.classes.digraph.DiGraph object at 0x11e90ae00&gt; = &lt;memory.ProjectBrain object at 0x11eb40ed0&gt;.conversation_tree</failure></testcase><testcase classname="tests.test_memory.TestMemoryErrorHandling" name="test_corrupted_memory_file" time="0.002" /><testcase classname="tests.test_memory.TestMemoryErrorHandling" name="test_missing_memory_directory" time="0.001" /><testcase classname="tests.test_memory.TestMemoryIntegration" name="test_memory_with_agents" time="0.388" /><testcase classname="tests.test_memory.TestMemoryIntegration" name="test_memory_with_workflow" time="130.982"><failure message="AssertionError: assert ('current_state' in {'checkpoint_task_3304976752353264864': {'channel_values': {'audit_feedback': [], 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11cfc15d0&gt;}, 'branch:to:planning': None, 'code_files': [], ...}, 'channel_versions': {'__start__': '00000000000000000000000000000002.0.3781677006401091', 'audit_feedback': '00000000000000000000000000000002.0.3781677006401091', 'brain_context': '00000000000000000000000000000002.0.3781677006401091', 'branch:to:planning': '00000000000000000000000000000002.0.3781677006401091', ...}, 'id': '1f063695-8e1d-6d9c-8000-a2997f01f0ac', 'ts': '2025-07-17T23:54:16.239851+00:00', ...}, 'codebase_map': {}, 'conversation_threads': {}, 'decisions': [], ...} or 0 &gt; 0)&#10; +  where {'checkpoint_task_3304976752353264864': {'channel_values': {'audit_feedback': [], 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11cfc15d0&gt;}, 'branch:to:planning': None, 'code_files': [], ...}, 'channel_versions': {'__start__': '00000000000000000000000000000002.0.3781677006401091', 'audit_feedback': '00000000000000000000000000000002.0.3781677006401091', 'brain_context': '00000000000000000000000000000002.0.3781677006401091', 'branch:to:planning': '00000000000000000000000000000002.0.3781677006401091', ...}, 'id': '1f063695-8e1d-6d9c-8000-a2997f01f0ac', 'ts': '2025-07-17T23:54:16.239851+00:00', ...}, 'codebase_map': {}, 'conversation_threads': {}, 'decisions': [], ...} = &lt;memory.ProjectBrain object at 0x11cfc15d0&gt;.memory&#10; +  and   0 = len([])">tests/test_memory.py:601: in test_memory_with_workflow
+    assert 'current_state' in temp_brain.memory or len(temp_brain.memory['decisions']) &gt; 0
+E   AssertionError: assert ('current_state' in {'checkpoint_task_3304976752353264864': {'channel_values': {'audit_feedback': [], 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11cfc15d0&gt;}, 'branch:to:planning': None, 'code_files': [], ...}, 'channel_versions': {'__start__': '00000000000000000000000000000002.0.3781677006401091', 'audit_feedback': '00000000000000000000000000000002.0.3781677006401091', 'brain_context': '00000000000000000000000000000002.0.3781677006401091', 'branch:to:planning': '00000000000000000000000000000002.0.3781677006401091', ...}, 'id': '1f063695-8e1d-6d9c-8000-a2997f01f0ac', 'ts': '2025-07-17T23:54:16.239851+00:00', ...}, 'codebase_map': {}, 'conversation_threads': {}, 'decisions': [], ...} or 0 &gt; 0)
+E    +  where {'checkpoint_task_3304976752353264864': {'channel_values': {'audit_feedback': [], 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11cfc15d0&gt;}, 'branch:to:planning': None, 'code_files': [], ...}, 'channel_versions': {'__start__': '00000000000000000000000000000002.0.3781677006401091', 'audit_feedback': '00000000000000000000000000000002.0.3781677006401091', 'brain_context': '00000000000000000000000000000002.0.3781677006401091', 'branch:to:planning': '00000000000000000000000000000002.0.3781677006401091', ...}, 'id': '1f063695-8e1d-6d9c-8000-a2997f01f0ac', 'ts': '2025-07-17T23:54:16.239851+00:00', ...}, 'codebase_map': {}, 'conversation_threads': {}, 'decisions': [], ...} = &lt;memory.ProjectBrain object at 0x11cfc15d0&gt;.memory
+E    +  and   0 = len([])</failure></testcase><testcase classname="tests.test_memory.TestMemoryIntegration" name="test_memory_with_tools" time="0.040" /><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_git_tools_initialization" time="0.001" /><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_clone_repository_local" time="0.215"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:38: in test_clone_repository_local
+    with patch('tools.git.Repo') as mock_git:
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_clone_repository_github" time="0.001"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:51: in test_clone_repository_github
+    with patch('tools.git.Repo') as mock_git:
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_read_repository_file" time="0.209"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:64: in test_read_repository_file
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_list_repository_files" time="0.209"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:80: in test_list_repository_files
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_create_repository_file" time="0.206"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:98: in test_create_repository_file
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_modify_repository_file" time="0.205"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:119: in test_modify_repository_file
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_get_repository_status" time="0.203"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:140: in test_get_repository_status
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_cleanup_repository" time="0.203"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:156: in test_cleanup_repository
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestGitRepositoryTools" name="test_list_cloned_repositories" time="0.002"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:175: in test_list_cloned_repositories
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestRealResearchTools" name="test_research_tools_initialization" time="0.001" /><testcase classname="tests.test_tools.TestRealResearchTools" name="test_web_search_integration" time="0.002"><failure message="AssertionError: assert 'Test Result' in 'No results. Try manual search: test query'">tests/test_tools.py:209: in test_web_search_integration
+    assert "Test Result" in result
+E   AssertionError: assert 'Test Result' in 'No results. Try manual search: test query'</failure></testcase><testcase classname="tests.test_tools.TestRealResearchTools" name="test_x_search" time="0.002"><failure message="assert 'Test tweet' in 'X (Twitter) search suggestions for latest info:\n        \n1. General discussion: &quot;test query&quot; lang:en -filter:replies min_faves:10\n2. Announcements: test query (announcement OR released OR update)  \n3. With links: test query filter:links\n\nRecent relevant topics might include:\n- Cloudflare Workers Python support (Pyodide beta, stdlib only)\n- Claude 4 capabilities for coding\n- Browser automation detection methods\n- Edge deployment patterns\n'">tests/test_tools.py:228: in test_x_search
+    assert "Test tweet" in result
+E   assert 'Test tweet' in 'X (Twitter) search suggestions for latest info:\n        \n1. General discussion: "test query" lang:en -filter:replies min_faves:10\n2. Announcements: test query (announcement OR released OR update)  \n3. With links: test query filter:links\n\nRecent relevant topics might include:\n- Cloudflare Workers Python support (Pyodide beta, stdlib only)\n- Claude 4 capabilities for coding\n- Browser automation detection methods\n- Edge deployment patterns\n'</failure></testcase><testcase classname="tests.test_tools.TestRealResearchTools" name="test_github_code_search" time="0.002"><failure message="assert 'name' in {'message': &quot;GitHub search failed: 'full_name'&quot;, 'type': 'error'}">tests/test_tools.py:253: in test_github_code_search
+    assert 'name' in results[0]
+E   assert 'name' in {'message': "GitHub search failed: 'full_name'", 'type': 'error'}</failure></testcase><testcase classname="tests.test_tools.TestRealResearchTools" name="test_analyze_github_repo" time="0.290"><failure message="assert 'test-repo' in &quot;Clone failed: Cloning into '/var/folders/hs/ztc1pl897nl7_bfvc87s377c0000gn/T/tmpvgebdg1m'...\nremote: Repository not found.\nfatal: repository 'https://github.com/test/repo/' not found\n&quot;">tests/test_tools.py:275: in test_analyze_github_repo
+    assert "test-repo" in result
+E   assert 'test-repo' in "Clone failed: Cloning into '/var/folders/hs/ztc1pl897nl7_bfvc87s377c0000gn/T/tmpvgebdg1m'...\nremote: Repository not found.\nfatal: repository 'https://github.com/test/repo/' not found\n"</failure></testcase><testcase classname="tests.test_tools.TestRealResearchTools" name="test_extract_github_content" time="0.267"><failure message="assert 0 &gt; 0&#10; +  where 0 = len([])">tests/test_tools.py:303: in test_extract_github_content
+    assert len(results) &gt; 0
+E   assert 0 &gt; 0
+E    +  where 0 = len([])</failure></testcase><testcase classname="tests.test_tools.TestBuildTools" name="test_build_tools_initialization" time="0.002"><failure message="TypeError: BuildTools() takes no arguments">tests/test_tools.py:312: in test_build_tools_initialization
+    build_tools = BuildTools(temp_brain)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: BuildTools() takes no arguments</failure></testcase><testcase classname="tests.test_tools.TestBuildTools" name="test_analyze_python_deps" time="0.001"><failure message="TypeError: BuildTools() takes no arguments">tests/test_tools.py:319: in test_analyze_python_deps
+    build_tools = BuildTools(temp_brain)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: BuildTools() takes no arguments</failure></testcase><testcase classname="tests.test_tools.TestBuildTools" name="test_run_linter" time="0.001"><failure message="TypeError: BuildTools() takes no arguments">tests/test_tools.py:339: in test_run_linter
+    build_tools = BuildTools(temp_brain)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: BuildTools() takes no arguments</failure></testcase><testcase classname="tests.test_tools.TestResearchToolsIntegration" name="test_create_research_tools" time="0.039" /><testcase classname="tests.test_tools.TestResearchToolsIntegration" name="test_web_search_tool" time="0.037"><failure message="AssertionError: assert 'Test' in 'No results. Try manual search: test query'">tests/test_tools.py:401: in test_web_search_tool
+    assert "Test" in result
+E   AssertionError: assert 'Test' in 'No results. Try manual search: test query'</failure></testcase><testcase classname="tests.test_tools.TestResearchToolsIntegration" name="test_github_search_tool" time="0.035"><failure message="assert 'test.py' in '[\n  {\n    &quot;type&quot;: &quot;error&quot;,\n    &quot;message&quot;: &quot;GitHub search failed: \'full_name\'&quot;\n  }\n]'">tests/test_tools.py:420: in test_github_search_tool
+    assert "test.py" in result
+E   assert 'test.py' in '[\n  {\n    "type": "error",\n    "message": "GitHub search failed: \'full_name\'"\n  }\n]'</failure></testcase><testcase classname="tests.test_tools.TestResearchToolsIntegration" name="test_remember_decision_tool" time="0.034"><failure message="json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)">tests/test_tools.py:428: in test_remember_decision_tool
+    result = remember_tool.func(
+tools.py:1358: in remember_decision
+    context_dict = json.loads(context) if context else {}
+                   ^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py:345: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py:363: in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</failure></testcase><testcase classname="tests.test_tools.TestResearchToolsIntegration" name="test_find_relevant_files_tool" time="0.251"><failure message="AssertionError: assert 'relevant files' in ''&#10; +  where '' = &lt;built-in method lower of str object at 0x1091ea728&gt;()&#10; +    where &lt;built-in method lower of str object at 0x1091ea728&gt; = ''.lower">tests/test_tools.py:452: in test_find_relevant_files_tool
+    assert "relevant files" in result.lower()
+E   AssertionError: assert 'relevant files' in ''
+E    +  where '' = &lt;built-in method lower of str object at 0x1091ea728&gt;()
+E    +    where &lt;built-in method lower of str object at 0x1091ea728&gt; = ''.lower</failure></testcase><testcase classname="tests.test_tools.TestToolsErrorHandling" name="test_git_tools_error_handling" time="0.001" /><testcase classname="tests.test_tools.TestToolsErrorHandling" name="test_research_tools_error_handling" time="0.001" /><testcase classname="tests.test_tools.TestToolsErrorHandling" name="test_build_tools_error_handling" time="0.001"><failure message="TypeError: BuildTools() takes no arguments">tests/test_tools.py:478: in test_build_tools_error_handling
+    build_tools = BuildTools(temp_brain)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: BuildTools() takes no arguments</failure></testcase><testcase classname="tests.test_tools.TestToolsPerformance" name="test_git_tools_performance" time="0.207"><failure message="AttributeError: module 'tools' has no attribute 'git'">tests/test_tools.py:496: in test_git_tools_performance
+    with patch('tools.git.Repo'):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1481: in __enter__
+    self.target = self.getter()
+                  ^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/pkgutil.py:528: in resolve_name
+    result = getattr(result, p)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'tools' has no attribute 'git'</failure></testcase><testcase classname="tests.test_tools.TestToolsPerformance" name="test_research_tools_performance" time="0.002" /><testcase classname="tests.test_tools.TestToolsPerformance" name="test_build_tools_performance" time="0.001"><failure message="TypeError: BuildTools() takes no arguments">tests/test_tools.py:529: in test_build_tools_performance
+    build_tools = BuildTools(temp_brain)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: BuildTools() takes no arguments</failure></testcase><testcase classname="tests.test_tools.TestToolsIntegration" name="test_tools_with_agents" time="0.038" /><testcase classname="tests.test_tools.TestToolsIntegration" name="test_tools_with_workflow" time="0.002" /><testcase classname="tests.test_tools.TestToolsIntegration" name="test_tools_with_memory" time="0.034"><failure message="json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)">tests/test_tools.py:604: in test_tools_with_memory
+    remember_tool.func(
+tools.py:1358: in remember_decision
+    context_dict = json.loads(context) if context else {}
+                   ^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py:345: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/json/decoder.py:363: in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+E   json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)</failure></testcase><testcase classname="tests.test_tools.TestToolsQuality" name="test_web_search_quality" time="0.002"><failure message="AssertionError: assert 'modern' in 'No results. Try manual search: FastAPI framework'">tests/test_tools.py:642: in test_web_search_quality
+    assert "modern" in result
+E   AssertionError: assert 'modern' in 'No results. Try manual search: FastAPI framework'</failure></testcase><testcase classname="tests.test_tools.TestToolsQuality" name="test_github_search_quality" time="0.002"><failure message="assert 'name' in {'message': &quot;GitHub search failed: 'full_name'&quot;, 'type': 'error'}">tests/test_tools.py:671: in test_github_search_quality
+    assert 'name' in result
+E   assert 'name' in {'message': "GitHub search failed: 'full_name'", 'type': 'error'}</failure></testcase><testcase classname="tests.test_tools.TestToolsQuality" name="test_linter_quality" time="0.001"><failure message="TypeError: BuildTools() takes no arguments">tests/test_tools.py:679: in test_linter_quality
+    build_tools = BuildTools(temp_brain)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: BuildTools() takes no arguments</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowCreation" name="test_create_workflow_graph" time="0.003"><failure message="AssertionError: Node audit missing from workflow graph&#10;assert 'audit' in {'auditor': StateNodeSpec(runnable=auditor(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), ...}&#10; +  where {'auditor': StateNodeSpec(runnable=auditor(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), ...} = &lt;langgraph.graph.state.StateGraph object at 0x11cd507d0&gt;.nodes">tests/test_workflow.py:37: in test_create_workflow_graph
+    assert node in graph.nodes, f"Node {node} missing from workflow graph"
+E   AssertionError: Node audit missing from workflow graph
+E   assert 'audit' in {'auditor': StateNodeSpec(runnable=auditor(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), ...}
+E    +  where {'auditor': StateNodeSpec(runnable=auditor(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), ...} = &lt;langgraph.graph.state.StateGraph object at 0x11cd507d0&gt;.nodes</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowCreation" name="test_create_quick_workflow_graph" time="0.002"><failure message="AssertionError: Node research missing from quick workflow graph&#10;assert 'research' in {'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'review': StateNodeSpec(runnable=review(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False)}&#10; +  where {'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'review': StateNodeSpec(runnable=review(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False)} = &lt;langgraph.graph.state.StateGraph object at 0x12ea86490&gt;.nodes">tests/test_workflow.py:50: in test_create_quick_workflow_graph
+    assert node in graph.nodes, f"Node {node} missing from quick workflow graph"
+E   AssertionError: Node research missing from quick workflow graph
+E   assert 'research' in {'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'review': StateNodeSpec(runnable=review(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False)}
+E    +  where {'coding': StateNodeSpec(runnable=coding(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'deploy': StateNodeSpec(runnable=deploy(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'planning': StateNodeSpec(runnable=planning(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False), 'review': StateNodeSpec(runnable=review(tags=None, recurse=True, explode_args=False, func_accepts_config=False, func_accepts={}), metadata=None, input=&lt;class 'memory.AgentState'&gt;, retry_policy=None, cache_policy=None, ends=(), defer=False)} = &lt;langgraph.graph.state.StateGraph object at 0x12ea86490&gt;.nodes</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowCreation" name="test_workflow_edges" time="0.003"><failure message="AssertionError: Edge ('planning', 'coding') missing from workflow graph&#10;assert ('planning', 'coding') in {('__start__', 'research'), ('auditor', 'coding'), ('coding', 'review'), ('deploy', 'reflection'), ('planning', 'auditor'), ('reflection', '__end__'), ...}&#10; +  where {('__start__', 'research'), ('auditor', 'coding'), ('coding', 'review'), ('deploy', 'reflection'), ('planning', 'auditor'), ('reflection', '__end__'), ...} = &lt;langgraph.graph.state.StateGraph object at 0x11ccf4fc0&gt;.edges">tests/test_workflow.py:67: in test_workflow_edges
+    assert edge in graph.edges, f"Edge {edge} missing from workflow graph"
+E   AssertionError: Edge ('planning', 'coding') missing from workflow graph
+E   assert ('planning', 'coding') in {('__start__', 'research'), ('auditor', 'coding'), ('coding', 'review'), ('deploy', 'reflection'), ('planning', 'auditor'), ('reflection', '__end__'), ...}
+E    +  where {('__start__', 'research'), ('auditor', 'coding'), ('coding', 'review'), ('deploy', 'reflection'), ('planning', 'auditor'), ('reflection', '__end__'), ...} = &lt;langgraph.graph.state.StateGraph object at 0x11ccf4fc0&gt;.edges</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowNodes" name="test_research_node" time="175.385"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [{'source': 'architect', 'content': 'Research findings: Use FastAPI for REST APIs', 'timestamp': '2025-01-27T10:00:00Z'}], 'plan': {}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12edbd2d0&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:102: in test_research_node
+    result_state = research_node(sample_state)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:69: in research_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [{'source': 'architect', 'content': 'Research findings: Use FastAPI for REST APIs', 'timestamp': '2025-01-27T10:00:00Z'}], 'plan': {}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12edbd2d0&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowNodes" name="test_planning_node" time="186.012"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [{'source': 'architect', 'content': 'Research findings: Use FastAPI for REST APIs', 'timestamp': '2025-01-27T10:00:00Z'}], 'plan': {'phases': ['Research', 'Design', 'Implementation', 'Testing', 'Deployment'], 'tasks': ['Setup FastAPI', 'Create endpoints', 'Add tests'], 'timeline': '2-3 weeks', 'risks': ['Integration complexity']}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11eeb3250&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:129: in test_planning_node
+    result_state = planning_node(sample_state)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:195: in planning_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [{'source': 'architect', 'content': 'Research findings: Use FastAPI for REST APIs', 'timestamp': '2025-01-27T10:00:00Z'}], 'plan': {'phases': ['Research', 'Design', 'Implementation', 'Testing', 'Deployment'], 'tasks': ['Setup FastAPI', 'Create endpoints', 'Add tests'], 'timeline': '2-3 weeks', 'risks': ['Integration complexity']}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11eeb3250&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowNodes" name="test_coding_node" time="177.704"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [], 'plan': {'phases': ['Research', 'Design', 'Implementation'], 'tasks': ['Create calculator class', 'Add arithmetic methods'], 'timeline': '1 week'}, 'audit_feedback': [], 'code_files': [{'filename': 'calculator.py', 'content': 'class Calculator:\n    def add(self, a, b):\n        return a + b', 'language': 'python'}], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12ed85e50&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:155: in test_coding_node
+    result_state = coding_node(sample_state)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:300: in coding_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [], 'plan': {'phases': ['Research', 'Design', 'Implementation'], 'tasks': ['Create calculator class', 'Add arithmetic methods'], 'timeline': '1 week'}, 'audit_feedback': [], 'code_files': [{'filename': 'calculator.py', 'content': 'class Calculator:\n    def add(self, a, b):\n        return a + b', 'language': 'python'}], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12ed85e50&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowNodes" name="test_auditor_node" time="134.671"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [], 'plan': {}, 'audit_feedback': [{'type': 'security', 'severity': 'low', 'message': 'Consider adding input validation', 'suggestion': 'Add type hints and validation'}], 'code_files': [{'filename': 'calculator.py', 'content': 'class Calculator:\n    def add(self, a, b):\n        return a + b', 'language': 'python'}], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12ed86e50&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:184: in test_auditor_node
+    result_state = auditor_node(sample_state)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:355: in auditor_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [], 'plan': {}, 'audit_feedback': [{'type': 'security', 'severity': 'low', 'message': 'Consider adding input validation', 'suggestion': 'Add type hints and validation'}], 'code_files': [{'filename': 'calculator.py', 'content': 'class Calculator:\n    def add(self, a, b):\n        return a + b', 'language': 'python'}], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12ed86e50&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowNodes" name="test_review_node" time="0.586"><failure message="KeyError: 'type'">tests/test_workflow.py:210: in test_review_node
+    result_state = review_node(sample_state)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:408: in review_node
+    code_summary = "\n".join([f"{f['type']}: {f['content'][:500]}..." for f in code_files])
+                                 ^^^^^^^^^
+E   KeyError: 'type'</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowNodes" name="test_deploy_node" time="0.690"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [], 'plan': {}, 'audit_feedback': [], 'code_files': [{'filename': 'calculator.py', 'content': 'class Calculator:\n    def add(self, a, b):\n        return a + b', 'language': 'python'}], 'review_feedback': [], 'deployment_status': {'status': 'prepared', 'timestamp': '2025-01-27T12:00:00Z', 'actions': ['Code reviewed and approved', 'Dependencies updated', 'Tests passing', 'Deployment config created', 'Documentation updated'], 'next_steps': ['Deploy to staging environment', 'Run integration tests', 'Deploy to production', 'Monitor performance']}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11c26b250&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:235: in test_deploy_node
+    result_state = deploy_node(sample_state)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:506: in deploy_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [], 'plan': {}, 'audit_feedback': [], 'code_files': [{'filename': 'calculator.py', 'content': 'class Calculator:\n    def add(self, a, b):\n        return a + b', 'language': 'python'}], 'review_feedback': [], 'deployment_status': {'status': 'prepared', 'timestamp': '2025-01-27T12:00:00Z', 'actions': ['Code reviewed and approved', 'Dependencies updated', 'Tests passing', 'Deployment config created', 'Documentation updated'], 'next_steps': ['Deploy to staging environment', 'Run integration tests', 'Deploy to production', 'Monitor performance']}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x11c26b250&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowNodes" name="test_reflection_node" time="17.361"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [{'source': 'test', 'content': 'Research done'}], 'plan': {'phases': ['test'], 'tasks': ['test']}, 'audit_feedback': [], 'code_files': [{'filename': 'test.py', 'content': 'test'}], 'review_feedback': [{'type': 'quality', 'message': 'Good code'}], 'deployment_status': {'status': 'ready'}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12f6d8850&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">graph.py:591: in reflection_node
+    brain.add_reflection(
+E   TypeError: ProjectBrain.add_reflection() got an unexpected keyword argument 'metadata'
+
+During handling of the above exception, another exception occurred:
+graph.py:612: in reflection_node
+    brain.add_reflection(
+E   TypeError: ProjectBrain.add_reflection() got an unexpected keyword argument 'metadata'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:261: in test_reflection_node
+    result_state = reflection_node(sample_state)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:635: in reflection_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a simple calculator', 'repo_url': '', 'research_results': [{'source': 'test', 'content': 'Research done'}], 'plan': {'phases': ['test'], 'tasks': ['test']}, 'audit_feedback': [], 'code_files': [{'filename': 'test.py', 'content': 'test'}], 'review_feedback': [{'type': 'quality', 'message': 'Good code'}], 'deployment_status': {'status': 'ready'}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12f6d8850&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowExecution" name="test_run_workflow_full_mode" time="0.003"><failure message="AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078016288'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078016288'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='4778707328'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078016288'&gt;, ...}">tests/test_workflow.py:289: in test_run_workflow_full_mode
+    assert 'final_result' in result
+E   AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078016288'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078016288'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='4778707328'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078016288'&gt;, ...}</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowExecution" name="test_run_workflow_quick_mode" time="0.003"><failure message="AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke().get()' id='5078017632'&gt;, 'deployment_status': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke().get()' id='5078017632'&gt;, 'final_state': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke()' id='5078014944'&gt;, 'messages': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke().get()' id='5078017632'&gt;, ...}">tests/test_workflow.py:311: in test_run_workflow_quick_mode
+    assert 'final_result' in result
+E   AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke().get()' id='5078017632'&gt;, 'deployment_status': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke().get()' id='5078017632'&gt;, 'final_state': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke()' id='5078014944'&gt;, 'messages': &lt;MagicMock name='create_quick_workflow_graph().compile().invoke().get()' id='5078017632'&gt;, ...}</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowExecution" name="test_run_workflow_research_mode" time="212.487"><failure message="AssertionError: assert 'final_result' in {'error': 'Object of type ProjectBrain is not JSON serializable', 'final_state': None, 'success': False}">tests/test_workflow.py:333: in test_run_workflow_research_mode
+    assert 'final_result' in result
+E   AssertionError: assert 'final_result' in {'error': 'Object of type ProjectBrain is not JSON serializable', 'final_state': None, 'success': False}</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowExecution" name="test_run_workflow_with_repo" time="0.247"><failure message="AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078022000'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078022000'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='4778706992'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078022000'&gt;, ...}">tests/test_workflow.py:356: in test_run_workflow_with_repo
+    assert 'final_result' in result
+E   AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078022000'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078022000'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='4778706992'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078022000'&gt;, ...}</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowStateManagement" name="test_state_persistence_across_nodes" time="185.191"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a calculator', 'repo_url': '', 'research_results': [{'source': 'test', 'content': 'Research done'}], 'plan': {}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12f1b33d0&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:386: in test_state_persistence_across_nodes
+    state_after_research = research_node(initial_state)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+graph.py:69: in research_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Create a calculator', 'repo_url': '', 'research_results': [{'source': 'test', 'content': 'Research done'}], 'plan': {}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12f1b33d0&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowStateManagement" name="test_state_validation" time="203.442" /><testcase classname="tests.test_workflow.TestWorkflowStateManagement" name="test_state_transitions" time="186.667"><failure message="ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Test task', 'repo_url': '', 'research_results': [{'source': 'test', 'content': 'Research done'}], 'plan': {}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12ede4650&gt;}, 'reflection_context': {}}&#10;For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE">.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:329: in _convert_to_message
+    msg_type = msg_kwargs.pop("role")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'role'
+
+During handling of the above exception, another exception occurred:
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:331: in _convert_to_message
+    msg_type = msg_kwargs.pop("type")
+               ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'type'
+
+The above exception was the direct cause of the following exception:
+tests/test_workflow.py:439: in test_state_transitions
+    state = research_node(state)
+            ^^^^^^^^^^^^^^^^^^^^
+graph.py:69: in research_node
+    return add_messages(state, [
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:40: in _add_messages
+    return func(left, right, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langgraph/graph/message.py:179: in add_messages
+    for m in convert_to_messages(left)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:367: in convert_to_messages
+    return [_convert_to_message(m) for m in messages]
+            ^^^^^^^^^^^^^^^^^^^^^^
+.venv/lib/python3.13/site-packages/langchain_core/messages/utils.py:339: in _convert_to_message
+    raise ValueError(msg) from e
+E   ValueError: Message dict must contain 'role' and 'content' keys, got {'messages': [], 'current_step': 'research', 'task': 'Test task', 'repo_url': '', 'research_results': [{'source': 'test', 'content': 'Research done'}], 'plan': {}, 'audit_feedback': [], 'code_files': [], 'review_feedback': [], 'deployment_status': {}, 'brain_context': {'brain': &lt;memory.ProjectBrain object at 0x12ede4650&gt;}, 'reflection_context': {}}
+E   For troubleshooting, visit: https://python.langchain.com/docs/troubleshooting/errors/MESSAGE_COERCION_FAILURE</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowErrorHandling" name="test_node_execution_error" time="191.477" /><testcase classname="tests.test_workflow.TestWorkflowErrorHandling" name="test_workflow_recovery" time="0.005" /><testcase classname="tests.test_workflow.TestWorkflowPerformance" name="test_workflow_execution_time" time="271.297"><failure message="assert (1752798535.1739929 - 1752798263.886416) &lt; 5.0">tests/test_workflow.py:533: in test_workflow_execution_time
+    assert end_time - start_time &lt; 5.0
+E   assert (1752798535.1739929 - 1752798263.886416) &lt; 5.0</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowPerformance" name="test_workflow_memory_efficiency" time="0.003"><failure message="ModuleNotFoundError: No module named 'psutil'">tests/test_workflow.py:539: in test_workflow_memory_efficiency
+    import psutil
+E   ModuleNotFoundError: No module named 'psutil'</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowIntegration" name="test_workflow_with_dspy" time="0.003"><failure message="AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078014944'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078014944'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='5078016624'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078014944'&gt;, ...}">tests/test_workflow.py:595: in test_workflow_with_dspy
+    assert 'final_result' in result
+E   AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078014944'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078014944'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='5078016624'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078014944'&gt;, ...}</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowIntegration" name="test_workflow_with_hf_routing" time="0.002"><failure message="AttributeError: &lt;module 'graph' from '/Users/PaxtonEdgar/Projects/multi-agent-coder/graph.py'&gt; does not have the attribute 'HFRoutingSystem'">tests/test_workflow.py:600: in test_workflow_with_hf_routing
+    with patch('graph.HFRoutingSystem') as mock_hf:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1497: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+/usr/local/Cellar/python@3.13/3.13.5/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py:1467: in get_original
+    raise AttributeError(
+E   AttributeError: &lt;module 'graph' from '/Users/PaxtonEdgar/Projects/multi-agent-coder/graph.py'&gt; does not have the attribute 'HFRoutingSystem'</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowIntegration" name="test_workflow_with_git_integration" time="0.243"><failure message="AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078015280'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078015280'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='5078018304'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078015280'&gt;, ...}">tests/test_workflow.py:643: in test_workflow_with_git_integration
+    assert 'final_result' in result
+E   AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078015280'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078015280'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='5078018304'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078015280'&gt;, ...}</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowQuality" name="test_workflow_output_completeness" time="0.003"><failure message="AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078023344'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078023344'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='5078022672'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078023344'&gt;, ...}">tests/test_workflow.py:673: in test_workflow_output_completeness
+    assert 'final_result' in result
+E   AssertionError: assert 'final_result' in {'code_files': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078023344'&gt;, 'deployment_status': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078023344'&gt;, 'final_state': &lt;MagicMock name='create_workflow_graph().compile().invoke()' id='5078022672'&gt;, 'messages': &lt;MagicMock name='create_workflow_graph().compile().invoke().get()' id='5078023344'&gt;, ...}</failure></testcase><testcase classname="tests.test_workflow.TestWorkflowQuality" name="test_workflow_output_consistency" time="565.002"><failure message="KeyError: 'status'">tests/test_workflow.py:699: in test_workflow_output_consistency
+    assert all(result['status'] == 'success' for result in results)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_workflow.py:699: in &lt;genexpr&gt;
+    assert all(result['status'] == 'success' for result in results)
+               ^^^^^^^^^^^^^^^^
+E   KeyError: 'status'</failure></testcase></testsuite></testsuites>

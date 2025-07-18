@@ -1,0 +1,42 @@
+{
+  "timestamp": "2025-07-17T20:26:09.181550",
+  "summary": {
+    "total_problems": 3,
+    "successful_problems": 0,
+    "success_rate": 0.0,
+    "avg_execution_time": 15.04865050315857,
+    "avg_output_length": 0.0
+  },
+  "results": [
+    {
+      "problem_id": "simple_001",
+      "description": "Write a function that returns \"hello world\"",
+      "success": false,
+      "execution_time": 15.046056985855103,
+      "output_length": 0,
+      "return_code": -1,
+      "error_message": "Timeout after 15 seconds",
+      "output_preview": null
+    },
+    {
+      "problem_id": "simple_002",
+      "description": "Create a function that adds two numbers",
+      "success": false,
+      "execution_time": 15.051139116287231,
+      "output_length": 0,
+      "return_code": -1,
+      "error_message": "Timeout after 15 seconds",
+      "output_preview": null
+    },
+    {
+      "problem_id": "simple_003",
+      "description": "Write a function that checks if a number is even",
+      "success": false,
+      "execution_time": 15.048755407333374,
+      "output_length": 0,
+      "return_code": -1,
+      "error_message": "Timeout after 15 seconds",
+      "output_preview": null
+    }
+  ]
+}

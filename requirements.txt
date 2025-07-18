@@ -82,6 +82,11 @@ hypothesis>=6.82.0  # For property-based testing
 coverage>=7.3.0  # For code coverage analysis
 pytest-asyncio>=0.21.0  # For async testing
 pytest-cov>=4.1.0  # For coverage reporting
+pytest-html>=4.1.0  # For HTML test reports
+pytest-xdist>=3.3.0  # For parallel test execution
+pytest-timeout>=2.1.0  # For test timeouts
+pytest-mock>=3.11.0  # For enhanced mocking
+mypy>=1.7.0  # For type checking
 
 # Optional: Enhanced research capabilities
 # duckduckgo-search>=4.0.0  # Uncomment for enhanced web search

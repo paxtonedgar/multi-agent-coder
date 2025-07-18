@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-07-17T19:48:17.936180",
+  "test_results": {
+    "exit_code": 4,
+    "stdout": "",
+    "stderr": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --cov=. --cov-report=html:tests/reports/coverage_html --cov-report=json:tests/reports/coverage.json --cov-report=term-missing --cov-fail-under tests/\n  inifile: /Users/PaxtonEdgar/Projects/multi-agent-coder/pytest.ini\n  rootdir: /Users/PaxtonEdgar/Projects/multi-agent-coder\n\n",
+    "duration": 2.003682851791382,
+    "success": false
+  },
+  "test_statistics": {
+    "total_tests": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "duration": 2.003682851791382,
+    "success_rate": 0
+  },
+  "performance_results": {},
+  "quality_results": {},
+  "summary": {
+    "overall_success": false,
+    "test_success_rate": 0,
+    "performance_acceptable": true,
+    "quality_acceptable": false
+  }
+}
