@@ -1231,7 +1231,10 @@ ADAPT TO YOUR PROJECT:
                 except Exception as e:
                     if "rate limit" in str(e).lower():
                         rate_limited = True
-                        print("GitHub API rate limit reached, skipping remaining content types")
+                        rate_limit_fallback.mark_rate_limited("github_api")
+                        print("GitHub API rate limit reached, switching to fallback examples")
+                        # Return fallback examples immediately
+                        return rate_limit_fallback.get_fallback_content("github_examples")
                     else:
                         print(f"Error extracting issues: {e}")
             
@@ -1244,7 +1247,9 @@ ADAPT TO YOUR PROJECT:
                 except Exception as e:
                     if "rate limit" in str(e).lower():
                         rate_limited = True
-                        print("GitHub API rate limit reached, skipping remaining content types")
+                        rate_limit_fallback.mark_rate_limited("github_api")
+                        print("GitHub API rate limit reached, switching to fallback examples")
+                        return rate_limit_fallback.get_fallback_content("github_examples")
                     else:
                         print(f"Error extracting PRs: {e}")
             
@@ -1257,7 +1262,9 @@ ADAPT TO YOUR PROJECT:
                 except Exception as e:
                     if "rate limit" in str(e).lower():
                         rate_limited = True
-                        print("GitHub API rate limit reached, skipping remaining content types")
+                        rate_limit_fallback.mark_rate_limited("github_api")
+                        print("GitHub API rate limit reached, switching to fallback examples")
+                        return rate_limit_fallback.get_fallback_content("github_examples")
                     else:
                         print(f"Error extracting notebooks: {e}")
             
@@ -1270,7 +1277,9 @@ ADAPT TO YOUR PROJECT:
                 except Exception as e:
                     if "rate limit" in str(e).lower():
                         rate_limited = True
-                        print("GitHub API rate limit reached, skipping remaining content types")
+                        rate_limit_fallback.mark_rate_limited("github_api")
+                        print("GitHub API rate limit reached, switching to fallback examples")
+                        return rate_limit_fallback.get_fallback_content("github_examples")
                     else:
                         print(f"Error extracting README/examples: {e}")
             
@@ -2198,3 +2207,280 @@ def create_research_tools(brain: ProjectBrain):
         cleanup_repository,
         list_cloned_repositories
     ] 
+
+# ==================== RATE LIMITING FALLBACK SYSTEM ====================
+
+class RateLimitFallback:
+    """Comprehensive fallback system for rate limiting scenarios."""
+    
+    def __init__(self):
+        self.rate_limited_apis = set()
+        self.fallback_cache = {}
+        self.offline_mode = False
+    
+    def mark_rate_limited(self, api_name: str):
+        """Mark an API as rate limited and switch to fallback mode."""
+        self.rate_limited_apis.add(api_name)
+        print(f"⚠️  {api_name} rate limited, switching to fallback mode")
+        
+        # If multiple APIs are rate limited, go offline
+        if len(self.rate_limited_apis) >= 2:
+            self.offline_mode = True
+            print("🔄 Multiple APIs rate limited, switching to offline mode")
+    
+    def is_rate_limited(self, api_name: str) -> bool:
+        """Check if an API is currently rate limited."""
+        return api_name in self.rate_limited_apis
+    
+    def is_offline_mode(self) -> bool:
+        """Check if we're in offline mode."""
+        return self.offline_mode
+    
+    def get_fallback_content(self, content_type: str) -> List[Dict]:
+        """Get fallback content when APIs are rate limited."""
+        if content_type == "github_examples":
+            return self._get_github_fallback_examples()
+        elif content_type == "search_results":
+            return self._get_search_fallback_results()
+        elif content_type == "code_examples":
+            return self._get_code_fallback_examples()
+        else:
+            return []
+    
+    def _get_github_fallback_examples(self) -> List[Dict]:
+        """Get fallback GitHub examples when API is rate limited."""
+        return [
+            {
+                "task": "Implement a REST API with FastAPI",
+                "results": """```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI()
+
+class Item(BaseModel):
+    name: str
+    price: float
+    is_offer: bool = None
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
+@app.get("/items/{item_id}")
+def read_item(item_id: int, q: str = None):
+    return {"item_id": item_id, "q": q}
+
+@app.post("/items/")
+def create_item(item: Item):
+    return item
+```""",
+                "source": "Fallback GitHub Example"
+            },
+            {
+                "task": "Create a machine learning pipeline",
+                "results": """```python
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+import joblib
+
+def train_ml_pipeline(data_path: str, model_path: str):
+    # Load data
+    df = pd.read_csv(data_path)
+    X = df.drop('target', axis=1)
+    y = df['target']
+    
+    # Split data
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    
+    # Train model
+    model = RandomForestClassifier(n_estimators=100)
+    model.fit(X_train, y_train)
+    
+    # Evaluate
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    
+    # Save model
+    joblib.dump(model, model_path)
+    
+    return accuracy
+```""",
+                "source": "Fallback GitHub Example"
+            },
+            {
+                "task": "Build a web scraper with error handling",
+                "results": """```python
+import requests
+from bs4 import BeautifulSoup
+import time
+from typing import List, Dict
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class WebScraper:
+    def __init__(self, base_url: str, delay: float = 1.0):
+        self.base_url = base_url
+        self.delay = delay
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+    
+    def scrape_page(self, url: str) -> Dict:
+        try:
+            response = self.session.get(url, timeout=10)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Extract data (customize based on target site)
+            title = soup.find('title').text if soup.find('title') else ''
+            content = soup.find('body').text if soup.find('body') else ''
+            
+            time.sleep(self.delay)  # Be respectful
+            
+            return {
+                'url': url,
+                'title': title,
+                'content': content[:1000]  # Limit content size
+            }
+            
+        except requests.RequestException as e:
+            logger.error(f"Error scraping {url}: {e}")
+            return {'url': url, 'error': str(e)}
+    
+    def scrape_multiple(self, urls: List[str]) -> List[Dict]:
+        results = []
+        for url in urls:
+            result = self.scraper_page(url)
+            results.append(result)
+        return results
+```""",
+                "source": "Fallback GitHub Example"
+            }
+        ]
+    
+    def _get_search_fallback_results(self) -> List[Dict]:
+        """Get fallback search results when APIs are rate limited."""
+        return [
+            {
+                "query": "Python FastAPI best practices",
+                "results": [
+                    {
+                        "title": "FastAPI Best Practices",
+                        "snippet": "Use Pydantic models for validation, implement proper error handling, use dependency injection, and follow REST conventions.",
+                        "url": "https://fastapi.tiangolo.com/tutorial/best-practices/"
+                    },
+                    {
+                        "title": "Production FastAPI Deployment",
+                        "snippet": "Use Gunicorn with Uvicorn workers, implement health checks, use environment variables for configuration, and set up proper logging.",
+                        "url": "https://fastapi.tiangolo.com/deployment/"
+                    }
+                ]
+            },
+            {
+                "query": "Machine learning pipeline architecture",
+                "results": [
+                    {
+                        "title": "ML Pipeline Design Patterns",
+                        "snippet": "Separate data preprocessing, feature engineering, model training, and evaluation into distinct stages with clear interfaces.",
+                        "url": "https://mlflow.org/docs/latest/tracking.html"
+                    },
+                    {
+                        "title": "MLOps Best Practices",
+                        "snippet": "Implement version control for data and models, use automated testing, monitor model performance, and establish CI/CD pipelines.",
+                        "url": "https://www.mlops.community/"
+                    }
+                ]
+            }
+        ]
+    
+    def _get_code_fallback_examples(self) -> List[Dict]:
+        """Get fallback code examples when APIs are rate limited."""
+        return [
+            {
+                "task": "Implement authentication middleware",
+                "code": """```python
+from fastapi import Request, HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import jwt
+from typing import Optional
+
+security = HTTPBearer()
+
+class AuthMiddleware:
+    def __init__(self, secret_key: str):
+        self.secret_key = secret_key
+    
+    async def verify_token(self, credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+        try:
+            payload = jwt.decode(credentials.credentials, self.secret_key, algorithms=["HS256"])
+            return payload
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(status_code=401, detail="Token expired")
+        except jwt.InvalidTokenError:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    
+    async def get_current_user(self, token: dict = Depends(verify_token)) -> dict:
+        user_id = token.get("user_id")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid user")
+        return {"user_id": user_id, "email": token.get("email")}
+```""",
+                "source": "Fallback Code Example"
+            },
+            {
+                "task": "Create a database connection pool",
+                "code": """```python
+import asyncio
+import asyncpg
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
+class DatabasePool:
+    def __init__(self, dsn: str, min_size: int = 10, max_size: int = 20):
+        self.dsn = dsn
+        self.min_size = min_size
+        self.max_size = max_size
+        self._pool = None
+    
+    async def create_pool(self):
+        self._pool = await asyncpg.create_pool(
+            self.dsn,
+            min_size=self.min_size,
+            max_size=self.max_size,
+            command_timeout=60
+        )
+    
+    async def close_pool(self):
+        if self._pool:
+            await self._pool.close()
+    
+    @asynccontextmanager
+    async def get_connection(self) -> AsyncGenerator[asyncpg.Connection, None]:
+        if not self._pool:
+            await self.create_pool()
+        
+        async with self._pool.acquire() as connection:
+            yield connection
+    
+    async def execute(self, query: str, *args):
+        async with self.get_connection() as conn:
+            return await conn.execute(query, *args)
+    
+    async def fetch(self, query: str, *args):
+        async with self.get_connection() as conn:
+            return await conn.fetch(query, *args)
+```""",
+                "source": "Fallback Code Example"
+            }
+        ]
+
+# Global rate limit fallback instance
+rate_limit_fallback = RateLimitFallback()

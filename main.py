@@ -8,10 +8,103 @@ import os
 import sys
 import argparse
 import asyncio
-from typing import Optional
+import threading
+from typing import Optional, Dict, List, Any
+from datetime import datetime
+
+# FastAPI imports
+from fastapi import FastAPI, Response
+import uvicorn
 
 from memory import ProjectBrain
 from graph import run_workflow
+
+# Global state for monitoring
+app = FastAPI(title="Multi-Agent Coding System", version="1.0.0")
+workflow_state = {
+    "phase": "Idle",
+    "progress": 0,
+    "logs": [],
+    "current_task": "",
+    "start_time": None,
+    "end_time": None,
+    "success": False,
+    "error": None
+}
+
+def update_workflow_state(phase: str = None, progress: int = None, log: str = None, **kwargs):
+    """Update the global workflow state for monitoring"""
+    global workflow_state
+    
+    if phase is not None:
+        workflow_state["phase"] = phase
+    if progress is not None:
+        workflow_state["progress"] = progress
+    if log:
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        workflow_state["logs"].append(f"[{timestamp}] {log}")
+        # Keep only last 50 logs
+        if len(workflow_state["logs"]) > 50:
+            workflow_state["logs"] = workflow_state["logs"][-50:]
+    
+    # Update any additional fields
+    for key, value in kwargs.items():
+        workflow_state[key] = value
+
+@app.get("/monitor")
+async def get_monitor() -> Dict[str, Any]:
+    """Endpoint for UI monitoring of agent workflow progress"""
+    global workflow_state
+    
+    # Calculate progress percentage if we have timing info
+    progress = workflow_state["progress"]
+    
+    # Only estimate progress if no explicit progress is set and not in failed state
+    if progress == 0 and workflow_state["phase"] != "Failed" and workflow_state["start_time"] and workflow_state["end_time"]:
+        total_duration = (workflow_state["end_time"] - workflow_state["start_time"]).total_seconds()
+        if total_duration > 0:
+            elapsed = (datetime.now() - workflow_state["start_time"]).total_seconds()
+            progress = min(100, int((elapsed / total_duration) * 100))
+    elif progress == 0 and workflow_state["phase"] != "Failed" and workflow_state["start_time"] and workflow_state["phase"] != "Idle":
+        # Estimate progress based on phase only if no explicit progress and not failed
+        phase_progress = {
+            "Research": 10,
+            "Planning": 25,
+            "Coding": 50,
+            "Audit": 70,
+            "Review": 85,
+            "Deploy": 95,
+            "Complete": 100
+        }
+        progress = phase_progress.get(workflow_state["phase"], workflow_state["progress"])
+    
+    return {
+        "phase": workflow_state["phase"],
+        "progress": progress,
+        "logs": workflow_state["logs"][-10:],  # Return last 10 logs
+        "current_task": workflow_state["current_task"],
+        "start_time": workflow_state["start_time"].isoformat() if workflow_state["start_time"] else None,
+        "end_time": workflow_state["end_time"].isoformat() if workflow_state["end_time"] else None,
+        "success": workflow_state["success"],
+        "error": workflow_state["error"],
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/health")
+async def health_check() -> Dict[str, str]:
+    """Health check endpoint"""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+def start_monitoring_server(host: str = "0.0.0.0", port: int = 8000):
+    """Start the FastAPI monitoring server in a background thread"""
+    def run_server():
+        uvicorn.run(app, host=host, port=port, log_level="info")
+    
+    server_thread = threading.Thread(target=run_server, daemon=True)
+    server_thread.start()
+    print(f"📊 Monitoring server started at http://{host}:{port}")
+    print(f"📈 Monitor endpoint: http://{host}:{port}/monitor")
+    return server_thread
 
 def main():
     """Main entry point with enhanced CLI options"""
@@ -34,6 +127,9 @@ Examples:
   
   # Quick mode with HF routing
   python main.py "Create simple web app" --mode quick --use-hf auto-reasoning
+  
+  # Start with monitoring server
+  python main.py "Build web app" --monitor
         """
     )
     
@@ -83,7 +179,24 @@ Examples:
         help="List available reasoning models and exit"
     )
     
+    parser.add_argument(
+        "--monitor",
+        action="store_true",
+        help="Start monitoring server for UI integration"
+    )
+    
+    parser.add_argument(
+        "--monitor-port",
+        type=int,
+        default=8000,
+        help="Port for monitoring server (default: 8000)"
+    )
+    
     args = parser.parse_args()
+    
+    # Start monitoring server if requested
+    if args.monitor:
+        start_monitoring_server(port=args.monitor_port)
     
     # Initialize brain
     brain = ProjectBrain()
@@ -105,11 +218,23 @@ Examples:
     if args.use_hf:
         _configure_hf_routing(brain, args.use_hf, args.force_hf)
     
+    # Initialize workflow state
+    update_workflow_state(
+        phase="Starting",
+        progress=0,
+        current_task=args.task,
+        start_time=datetime.now(),
+        log=f"Starting {args.mode} workflow for: {args.task}"
+    )
+    
     # Run workflow
     print(f"🚀 Starting {args.mode} workflow for: {args.task}")
     print(f"📊 HF Routing: {args.use_hf or 'disabled'}")
     
     try:
+        # Update state for each phase
+        update_workflow_state(phase="Research", progress=10, log="Starting research phase")
+        
         result = run_workflow(
             task=args.task,
             brain=brain,
@@ -118,6 +243,14 @@ Examples:
         )
         
         if result.get('success'):
+            update_workflow_state(
+                phase="Complete",
+                progress=100,
+                success=True,
+                end_time=datetime.now(),
+                log="Workflow completed successfully!"
+            )
+            
             print("\n✅ Workflow completed successfully!")
             
             # Handle output truncation for research mode
@@ -140,10 +273,28 @@ Examples:
                     final_result = final_result[:1000] + '\n[Truncated - Full result in logs]'
                 print(f"📝 Final result: {final_result}")
         else:
+            update_workflow_state(
+                phase="Failed",
+                progress=0,
+                success=False,
+                error=result.get('error', 'Unknown error'),
+                end_time=datetime.now(),
+                log=f"Workflow failed: {result.get('error', 'Unknown error')}"
+            )
+            
             print(f"\n❌ Workflow failed: {result.get('error', 'Unknown error')}")
             sys.exit(1)
         
     except Exception as e:
+        update_workflow_state(
+            phase="Failed",
+            progress=0,
+            success=False,
+            error=str(e),
+            end_time=datetime.now(),
+            log=f"Workflow failed with exception: {e}"
+        )
+        
         print(f"❌ Workflow failed: {e}")
         sys.exit(1)
 

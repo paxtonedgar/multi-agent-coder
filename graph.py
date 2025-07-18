@@ -16,6 +16,19 @@ from agents import create_all_agents
 from prompts import PromptFactory, PromptTemplates
 from datetime import datetime
 
+# Add JSON serialization helper
+def safe_json_dumps(obj, indent=2):
+    """Safely serialize objects to JSON, handling bytes and other non-serializable types"""
+    def json_serializer(obj):
+        if isinstance(obj, bytes):
+            return obj.decode('utf-8', errors='replace')
+        elif hasattr(obj, '__dict__'):
+            return obj.__dict__
+        else:
+            return str(obj)
+    
+    return json.dumps(obj, indent=indent, default=json_serializer)
+
 # ==================== ASYNC UTILITIES ====================
 
 class AsyncManager:
@@ -123,11 +136,13 @@ class AsyncErrorHandler:
 # ==================== NODE FUNCTIONS ====================
 
 def research_node(state: AgentState) -> AgentState:
-    """Research current solutions and technologies using DSPy optimization with HF routing"""
-    print("[DEBUG] Entering research_node. State:", state)
+    """Research the task and gather relevant information"""
+    
     brain = state.get('brain_context', {}).get('brain')
     if not brain:
-        return add_messages(state, [("system", "No brain context available for research")])
+        # Add error message to state
+        state['messages'] = state.get('messages', []) + [{"role": "system", "content": "No brain context available for research"}]
+        return state
     
     # Initialize DSPy prompt factory
     prompt_factory = PromptFactory(brain)
@@ -136,21 +151,9 @@ def research_node(state: AgentState) -> AgentState:
     task = state.get('task', '')
     
     # Use DSPy module for research if available
-    if research_module:
+    if research_module and task:
         try:
             research_output = research_module.forward(task=task)
-            
-            # Try HF routing if needed
-            try:
-                from hf_routing import HFRoutingSystem
-                hf_router = HFRoutingSystem(brain)
-                routed_output, model_used = hf_router.route_task(task, research_output)
-                if model_used.startswith('HF_'):
-                    research_output = routed_output
-                    print(f"✅ Research routed to {model_used}")
-            except ImportError:
-                pass  # HF routing not available
-            
             research_results = [
                 {
                     'source': 'dspy_research',
@@ -158,10 +161,6 @@ def research_node(state: AgentState) -> AgentState:
                     'timestamp': '2025-01-27T10:00:00Z'
                 }
             ]
-            
-            # Log DSPy example to brain
-            _log_dspy_example(brain, task, research_output, 'research')
-            
         except Exception as e:
             print(f"DSPy research failed, falling back to agents: {e}")
             research_results = _fallback_research(brain, task)
@@ -170,12 +169,17 @@ def research_node(state: AgentState) -> AgentState:
     
     # Update state with research results
     state['research_results'] = research_results
-    print("[DEBUG] Exiting research_node. Research results:", research_results)
     
-    return add_messages(state, [
-        ("system", f"Research completed. Found {len(research_results)} sources."),
-        ("human", f"Research results: {json.dumps(research_results, indent=2)}")
-    ])
+    # Add new messages to state
+    new_messages = [
+        {"role": "system", "content": f"Research completed. Found {len(research_results)} sources."},
+        {"role": "human", "content": f"Research results: {safe_json_dumps(research_results)}"}
+    ]
+    
+    # Update messages in state
+    state['messages'] = state.get('messages', []) + new_messages
+    
+    return state
 
 def _fallback_research(brain: ProjectBrain, task: str) -> List[Dict]:
     """Fallback research using traditional agents"""
@@ -236,11 +240,13 @@ def _fallback_research(brain: ProjectBrain, task: str) -> List[Dict]:
     ]
 
 def planning_node(state: AgentState) -> AgentState:
-    """Create implementation plan based on research with HF routing"""
+    """Create implementation plan using DSPy optimization"""
     
     brain = state.get('brain_context', {}).get('brain')
     if not brain:
-        return add_messages(state, [("system", "No brain context available for planning")])
+        # Add error message to state
+        state['messages'] = state.get('messages', []) + [{"role": "system", "content": "No brain context available for planning"}]
+        return state
     
     # Initialize DSPy prompt factory
     prompt_factory = PromptFactory(brain)
@@ -250,65 +256,39 @@ def planning_node(state: AgentState) -> AgentState:
     research_results = state.get('research_results', [])
     
     # Use DSPy module for planning if available
-    if planning_module and research_results:
+    if planning_module and task:
         try:
-            research_context = "\n".join([f"{r['source']}: {r['content'][:500]}..." for r in research_results])
-            plan_output = planning_module.forward(task=task, research_context=research_context)
-            
-            # Try HF routing if needed
-            try:
-                from hf_routing import HFRoutingSystem
-                hf_router = HFRoutingSystem(brain)
-                routed_output, model_used = hf_router.route_task(task, plan_output)
-                if model_used.startswith('HF_'):
-                    plan_output = routed_output
-                    print(f"✅ Planning routed to {model_used}")
-            except ImportError:
-                pass  # HF routing not available
-            
-            # Log DSPy example to brain
-            _log_dspy_example(brain, f"Plan: {task}", plan_output, 'planning')
-            
-            # Try to parse as JSON
-            try:
-                if '{' in plan_output and '}' in plan_output:
-                    start = plan_output.find('{')
-                    end = plan_output.rfind('}') + 1
-                    plan_json = json.loads(plan_output[start:end])
-                else:
-                    plan_json = {
-                        'phases': ['Research', 'Design', 'Implementation', 'Testing', 'Deployment'],
-                        'tasks': plan_output.split('\n'),
-                        'timeline': '2-4 weeks',
-                        'risks': ['Technical complexity', 'Integration challenges']
-                    }
-            except:
-                plan_json = {
-                    'phases': ['Research', 'Design', 'Implementation', 'Testing', 'Deployment'],
-                    'tasks': plan_output.split('\n'),
-                    'timeline': '2-4 weeks',
-                    'risks': ['Technical complexity', 'Integration challenges']
-                }
+            research_context = json.dumps(research_results) if research_results else ""
+            planning_output = planning_module.forward(task=task, research_context=research_context)
+            plan = json.loads(planning_output) if isinstance(planning_output, str) else planning_output
         except Exception as e:
             print(f"DSPy planning failed, falling back to agents: {e}")
-            plan_json = _fallback_planning(brain, task, research_results)
+            plan = _fallback_planning(brain, task, research_results)
     else:
-        plan_json = _fallback_planning(brain, task, research_results)
+        plan = _fallback_planning(brain, task, research_results)
     
     # Update state with plan
-    state['plan'] = plan_json
+    state['plan'] = plan
     
-    return add_messages(state, [
-        ("system", "Planning completed"),
-        ("human", f"Implementation plan: {json.dumps(plan_json, indent=2)}")
-    ])
+    # Add new messages to state
+    new_messages = [
+        {"role": "system", "content": "Planning completed"},
+        {"role": "human", "content": f"Implementation plan: {safe_json_dumps(plan)}"}
+    ]
+    
+    # Update messages in state
+    state['messages'] = state.get('messages', []) + new_messages
+    
+    return state
 
 def coding_node(state: AgentState) -> AgentState:
-    """Generate code based on plan with HF routing"""
+    """Generate code based on plan using DSPy optimization"""
     
     brain = state.get('brain_context', {}).get('brain')
     if not brain:
-        return add_messages(state, [("system", "No brain context available for coding")])
+        # Add error message to state
+        state['messages'] = state.get('messages', []) + [{"role": "system", "content": "No brain context available for coding"}]
+        return state
     
     # Initialize DSPy prompt factory
     prompt_factory = PromptFactory(brain)
@@ -316,104 +296,42 @@ def coding_node(state: AgentState) -> AgentState:
     
     task = state.get('task', '')
     plan = state.get('plan', {})
-    repo_url = state.get('repo_url', '')  # Get repository URL if provided
+    repo_url = state.get('repo_url', '')
     
     # Use DSPy module for coding if available
-    if coding_module and plan:
+    if coding_module and task and plan:
         try:
-            plan_str = json.dumps(plan, indent=2) if isinstance(plan, dict) else str(plan)
-            code_output = coding_module.forward(task=task, plan=plan_str)
-            
-            # Try HF routing if needed
-            try:
-                from hf_routing import HFRoutingSystem
-                hf_router = HFRoutingSystem(brain)
-                routed_output, model_used = hf_router.route_task(task, code_output)
-                if model_used.startswith('HF_'):
-                    code_output = routed_output
-                    print(f"✅ Coding routed to {model_used}")
-            except ImportError:
-                pass  # HF routing not available
-            
-            # Log DSPy example to brain
-            _log_dspy_example(brain, f"Code: {task}", code_output, 'coding')
-            
-            # Create code files from DSPy output
-            code_files = [
-                {
-                    'type': 'main_code',
-                    'content': code_output,
-                    'agent': 'dspy_coder'
-                }
-            ]
-            
+            plan_str = json.dumps(plan) if isinstance(plan, dict) else str(plan)
+            coding_output = coding_module.forward(task=task, plan=plan_str)
+            code_files = json.loads(coding_output) if isinstance(coding_output, str) else coding_output
         except Exception as e:
             print(f"DSPy coding failed, falling back to agents: {e}")
             code_files = _fallback_coding(brain, task, plan, repo_url)
     else:
         code_files = _fallback_coding(brain, task, plan, repo_url)
     
-    # If repository URL is provided, clone and commit changes
-    if repo_url:
-        try:
-            from tools import GitRepositoryTools
-            git_tools = GitRepositoryTools(brain)
-            
-            # Clone repository
-            clone_result = git_tools.clone_repository(repo_url)
-            repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git', '')
-            
-            # Create new branch for changes
-            git_tools.create_branch(repo_name, "feature/auto-generated-code")
-            
-            # Create files in repository
-            for i, code_file in enumerate(code_files):
-                file_name = f"generated_{code_file['type']}_{i+1}.py"
-                git_tools.create_repository_file(
-                    repo_name, 
-                    file_name, 
-                    code_file['content'],
-                    f"Add {code_file['type']} from {code_file['agent']}"
-                )
-            
-            # Get repository status
-            status = git_tools.get_repository_status(repo_name)
-            
-            # Update state with Git information
-            state['git_repo'] = {
-                'url': repo_url,
-                'name': repo_name,
-                'status': status,
-                'files_created': len(code_files)
-            }
-            
-            code_files.append({
-                'type': 'git_operations',
-                'content': f"Repository cloned and files committed to {repo_name}",
-                'agent': 'git_tools'
-            })
-            
-        except Exception as e:
-            code_files.append({
-                'type': 'git_error',
-                'content': f"Git operations failed: {str(e)}",
-                'agent': 'git_tools'
-            })
-    
     # Update state with code files
     state['code_files'] = code_files
     
-    return add_messages(state, [
-        ("system", f"Code generation completed. Created {len(code_files)} files."),
-        ("human", f"Generated code: {json.dumps(code_files, indent=2)}")
-    ])
+    # Add new messages to state
+    new_messages = [
+        {"role": "system", "content": f"Code generation completed. Created {len(code_files)} files."},
+        {"role": "human", "content": f"Generated code: {safe_json_dumps(code_files)}"}
+    ]
+    
+    # Update messages in state
+    state['messages'] = state.get('messages', []) + new_messages
+    
+    return state
 
 def auditor_node(state: AgentState) -> AgentState:
     """Audit code/plan for antipatterns and improvements"""
     
     brain = state.get('brain_context', {}).get('brain')
     if not brain:
-        return add_messages(state, [("system", "No brain context available for audit")])
+        # Add error message to state
+        state['messages'] = state.get('messages', []) + [{"role": "system", "content": "No brain context available for audit"}]
+        return state
     
     # Initialize DSPy prompt factory
     prompt_factory = PromptFactory(brain)
@@ -458,10 +376,16 @@ def auditor_node(state: AgentState) -> AgentState:
     # Update state with audit feedback
     state['audit_feedback'] = audit_feedback
     
-    return add_messages(state, [
-        ("system", "Code audit completed"),
-        ("human", f"Audit feedback: {json.dumps(audit_feedback, indent=2)}")
-    ])
+    # Add new messages to state
+    new_messages = [
+        {"role": "system", "content": "Code audit completed"},
+        {"role": "human", "content": f"Audit feedback: {safe_json_dumps(audit_feedback)}"}
+    ]
+    
+    # Update messages in state
+    state['messages'] = state.get('messages', []) + new_messages
+    
+    return state
 
 def _fallback_audit(brain: ProjectBrain, audit_content: str) -> List[Dict]:
     """Fallback audit using traditional agent"""
@@ -504,7 +428,7 @@ def review_node(state: AgentState) -> AgentState:
     
     brain = state.get('brain_context', {}).get('brain')
     if not brain:
-        return add_messages(state, [("system", "No brain context available for review")])
+        return add_messages(state, [{"role": "system", "content": "No brain context available for review"}])
     
     reviewer = create_all_agents(brain)['reviewer']
     
@@ -547,17 +471,23 @@ def review_node(state: AgentState) -> AgentState:
     # Update state with review feedback
     state['review_feedback'] = review_feedback
     
-    return add_messages(state, [
-        ("system", "Code review completed"),
-        ("human", f"Review feedback: {json.dumps(review_feedback, indent=2)}")
-    ])
+    # Add new messages to state
+    new_messages = [
+        {"role": "system", "content": "Code review completed"},
+        {"role": "human", "content": f"Review feedback: {safe_json_dumps(review_feedback)}"}
+    ]
+    
+    # Update messages in state
+    state['messages'] = state.get('messages', []) + new_messages
+    
+    return state
 
 def deploy_node(state: AgentState) -> AgentState:
     """Prepare for deployment"""
     
     brain = state.get('brain_context', {}).get('brain')
     if not brain:
-        return add_messages(state, [("system", "No brain context available for deployment")])
+        return add_messages(state, [{"role": "system", "content": "No brain context available for deployment"}])
     
     integrator = create_all_agents(brain)['integrator']
     
@@ -609,10 +539,16 @@ def deploy_node(state: AgentState) -> AgentState:
     # Update state with deployment status
     state['deployment_status'] = deployment_status
     
-    return add_messages(state, [
-        ("system", "Deployment preparation completed"),
-        ("human", f"Deployment status: {json.dumps(deployment_status, indent=2)}")
-    ])
+    # Add new messages to state
+    new_messages = [
+        {"role": "system", "content": "Deployment preparation completed"},
+        {"role": "human", "content": f"Deployment status: {safe_json_dumps(deployment_status)}"}
+    ]
+    
+    # Update messages in state
+    state['messages'] = state.get('messages', []) + new_messages
+    
+    return state
 
 # ==================== REFLECTION NODE ====================
 
@@ -621,7 +557,7 @@ def reflection_node(state: AgentState) -> AgentState:
     
     brain = state.get('brain_context', {}).get('brain')
     if not brain:
-        return add_messages(state, [("system", "No brain context available for reflection")])
+        return add_messages(state, [{"role": "system", "content": "No brain context available for reflection"}])
     
     # Get workflow results for reflection
     task = state.get('task', '')
@@ -696,32 +632,17 @@ def reflection_node(state: AgentState) -> AgentState:
                 # Add to brain as reflection node
                 brain.add_reflection(
                     content=reflection_content,
-                    sources=reflection_data.get('sources', []),
-                    metadata={
-                        'workflow_task': task,
-                        'workflow_summary': workflow_summary,
-                        'reflection_type': 'post_workflow'
-                    }
+                    sources=reflection_data.get('sources', [])
                 )
             else:
                 # Store unstructured reflection
                 brain.add_reflection(
-                    content=reflection_output,
-                    metadata={
-                        'workflow_task': task,
-                        'workflow_summary': workflow_summary,
-                        'reflection_type': 'post_workflow'
-                    }
+                    content=reflection_output
                 )
         except:
             # Store as plain text if parsing fails
             brain.add_reflection(
-                content=reflection_output,
-                metadata={
-                    'workflow_task': task,
-                    'workflow_summary': workflow_summary,
-                    'reflection_type': 'post_workflow'
-                }
+                content=reflection_output
             )
         
         # Update state with reflection context
@@ -731,16 +652,25 @@ def reflection_node(state: AgentState) -> AgentState:
             'timestamp': datetime.now().isoformat()
         }
         
-        return add_messages(state, [
-            ("system", "Reflection completed"),
-            ("human", f"Reflection insights: {reflection_output[:500]}...")
-        ])
+        # Add new messages to state
+        new_messages = [
+            {"role": "system", "content": "Reflection completed"},
+            {"role": "human", "content": f"Reflection insights: {reflection_output[:500]}..."}
+        ]
+        
+        # Update messages in state
+        state['messages'] = state.get('messages', []) + new_messages
+        
+        return state
         
     except Exception as e:
         print(f"Reflection failed: {e}")
-        return add_messages(state, [
-            ("system", f"Reflection failed: {e}")
-        ])
+        new_messages = [
+            {"role": "system", "content": f"Reflection failed: {e}"}
+        ]
+        # Update messages in state
+        state['messages'] = state.get('messages', []) + new_messages
+        return state
 
 # ==================== CONFIDENCE & RECRUITMENT ====================
 

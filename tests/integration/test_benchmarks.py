@@ -132,9 +132,9 @@ class BenchmarkTestHarness:
             
             # Run the CLI with the problem
             cmd = [
-                sys.executable, 'main.py', 'research',
-                '--input', str(problem_file),
-                '--output', str(Path(self.temp_dir) / f"{problem.problem_id}_output.txt")
+                sys.executable, 'main.py',
+                f"Solve this {problem.benchmark} problem: {problem.description}",
+                '--mode', 'minimal'
             ]
             
             result = subprocess.run(
@@ -147,12 +147,8 @@ class BenchmarkTestHarness:
             
             execution_time = time.time() - start_time
             
-            # Read output file if it exists
-            output_file = Path(self.temp_dir) / f"{problem.problem_id}_output.txt"
-            agent_output = ""
-            if output_file.exists():
-                with open(output_file, 'r') as f:
-                    agent_output = f.read()
+            # Get output from stdout
+            agent_output = result.stdout
             
             # Determine success based on return code and output
             success = result.returncode == 0 and len(agent_output.strip()) > 0

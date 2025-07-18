@@ -173,6 +173,17 @@ class SecureEncoder(json.JSONEncoder):
         self.security = security_config
     
     def default(self, obj):
+        # Handle ProjectBrain objects
+        if isinstance(obj, ProjectBrain):
+            return {
+                'type': 'project_brain',
+                'project_path': obj.project_path,
+                'brain_file': obj.brain_file,
+                'max_memory_nodes': obj.max_memory_nodes,
+                'max_node_size': obj.max_node_size,
+                'compression_enabled': obj.compression_enabled
+            }
+        
         # Handle FAISS index
         if hasattr(obj, 'ntotal') and hasattr(obj, 'reconstruct'):
             try:
@@ -345,7 +356,7 @@ class ProjectBrain:
                 
                 # Decompress memory if needed
                 if self.compression_enabled:
-                    self._decompress_memory()
+                    memory_data = self._decompress_memory(memory_data)
                 
                 return memory_data
             except Exception as e:
@@ -1150,13 +1161,13 @@ class ProjectBrain:
         except Exception as e:
             print(f"Memory compression failed: {e}")
     
-    def _decompress_memory(self):
+    def _decompress_memory(self, memory_data: Dict) -> Dict:
         """Decompress memory data when loading"""
         try:
             import gzip
             import base64
             
-            for node in self.memory.get('memory_nodes', []):
+            for node in memory_data.get('memory_nodes', []):
                 if node.get('compressed') and node['content'].startswith('COMPRESSED:'):
                     compressed_data = node['content'][11:]  # Remove 'COMPRESSED:' prefix
                     decompressed = gzip.decompress(base64.b64decode(compressed_data))
@@ -1164,6 +1175,8 @@ class ProjectBrain:
                     node['compressed'] = False
         except Exception as e:
             print(f"Memory decompression failed: {e}")
+        
+        return memory_data
     
     def export_memory(self, format: str = 'json', include_encrypted: bool = False) -> str:
         """Export memory data in various formats"""

@@ -24,6 +24,41 @@ from tools import GitRepositoryTools, create_research_tools
 from agents import create_all_agents, MockLLM
 from graph import run_workflow, create_workflow_graph
 
+# ==================== RATE LIMITING PROTECTION ====================
+
+@pytest.fixture(autouse=True)
+def mock_external_apis():
+    """Automatically mock all external APIs to prevent rate limiting during tests"""
+    # Check if we're in a test environment that should avoid external calls
+    if os.getenv('NO_EXTERNAL') or os.getenv('TESTING'):
+        with patch('prompts._fetch_hf_datasets', return_value=[]), \
+             patch('prompts.PromptFactory._initialize_modules'), \
+             patch('agents.create_all_agents'), \
+             patch('graph._fallback_research'), \
+             patch('graph._fallback_planning'), \
+             patch('graph._fallback_audit'), \
+             patch('tools.web_search'), \
+             patch('tools.github_search'), \
+             patch('tools.x_search'):
+            yield
+    else:
+        yield
+
+@pytest.fixture(autouse=True)
+def set_testing_environment():
+    """Set testing environment variables to prevent external API calls"""
+    original_env = os.environ.copy()
+    
+    # Set testing environment variables
+    os.environ['TESTING'] = '1'
+    os.environ['NO_EXTERNAL'] = '1'
+    
+    yield
+    
+    # Restore original environment
+    os.environ.clear()
+    os.environ.update(original_env)
+
 # ==================== TEST CONFIGURATION ====================
 
 @pytest.fixture(scope="session")

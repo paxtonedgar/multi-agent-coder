@@ -1,0 +1,105 @@
+{
+  "timestamp": "2025-07-18T00:16:04.466282",
+  "summary": {
+    "total_problems": 3,
+    "successful_problems": 0,
+    "overall_success_rate": 0.0,
+    "avg_quality_score": 0.0,
+    "avg_performance_score": 0.0,
+    "avg_execution_time": 30.040196736653645
+  },
+  "benchmark_metrics": {
+    "swe_bench": {
+      "total": 1,
+      "successful": 0,
+      "execution_times": [
+        30.034371852874756
+      ],
+      "quality_scores": [
+        0.0
+      ],
+      "performance_scores": [
+        0.0
+      ],
+      "success_rate": 0.0,
+      "avg_execution_time": 30.034371852874756,
+      "avg_quality_score": 0.0,
+      "avg_performance_score": 0.0
+    },
+    "human_eval": {
+      "total": 1,
+      "successful": 0,
+      "execution_times": [
+        30.035404205322266
+      ],
+      "quality_scores": [
+        0.0
+      ],
+      "performance_scores": [
+        0.0
+      ],
+      "success_rate": 0.0,
+      "avg_execution_time": 30.035404205322266,
+      "avg_quality_score": 0.0,
+      "avg_performance_score": 0.0
+    },
+    "mbpp": {
+      "total": 1,
+      "successful": 0,
+      "execution_times": [
+        30.050814151763916
+      ],
+      "quality_scores": [
+        0.0
+      ],
+      "performance_scores": [
+        0.0
+      ],
+      "success_rate": 0.0,
+      "avg_execution_time": 30.050814151763916,
+      "avg_quality_score": 0.0,
+      "avg_performance_score": 0.0
+    }
+  },
+  "detailed_results": [
+    {
+      "benchmark": "swe_bench",
+      "problem_id": "swe_001",
+      "success": false,
+      "execution_time": 30.034371852874756,
+      "code_length": 0,
+      "error_type": "timeout",
+      "error_message": "Timeout after 30.0 seconds",
+      "test_output": null,
+      "agent_output": "",
+      "quality_score": 0.0,
+      "performance_score": 0.0
+    },
+    {
+      "benchmark": "human_eval",
+      "problem_id": "human_001",
+      "success": false,
+      "execution_time": 30.035404205322266,
+      "code_length": 0,
+      "error_type": "timeout",
+      "error_message": "Timeout after 30.0 seconds",
+      "test_output": null,
+      "agent_output": "",
+      "quality_score": 0.0,
+      "performance_score": 0.0
+    },
+    {
+      "benchmark": "mbpp",
+      "problem_id": "mbpp_001",
+      "success": false,
+      "execution_time": 30.050814151763916,
+      "code_length": 0,
+      "error_type": "timeout",
+      "error_message": "Timeout after 30.1 seconds",
+      "test_output": null,
+      "agent_output": "",
+      "quality_score": 0.0,
+      "performance_score": 0.0
+    }
+  ]
+}
