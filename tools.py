@@ -1,5 +1,6 @@
 """
 LangChain tools for research and build operations
+Enhanced with async/backoff for API reliability
 """
 
 import os
@@ -13,6 +14,8 @@ import subprocess
 import tempfile
 import shutil
 import datetime
+import time
+import hashlib
 from typing import Dict, List, Any, Tuple, Optional
 import requests
 import numpy as np
@@ -20,43 +23,147 @@ import traceback
 import tomllib  # Python 3.11+ for TOML parsing
 import re
 from pathlib import Path
+import aiohttp
+from tenacity import retry, wait_exponential, stop_after_attempt
+from diskcache import Cache
+
+try:
+    import git
+except ImportError:
+    git = None
 
 from langchain.tools import tool
 from langchain_core.tools import BaseTool
 
 from memory import ProjectBrain
 
+# Initialize cache for API responses
+cache = Cache('.cache')
+
+# Mock results for when external APIs are disabled
+MOCK_GITHUB_RESULTS = [
+    {"name": "example-repo", "description": "Mock repository for testing", "html_url": "https://github.com/example/repo"},
+    {"name": "test-project", "description": "Test project with Python code", "html_url": "https://github.com/test/project"}
+]
+
+MOCK_HF_RESULTS = [
+    {"name": "example-dataset", "description": "Mock HuggingFace dataset", "url": "https://huggingface.co/datasets/example"},
+    {"name": "test-model", "description": "Test model for evaluation", "url": "https://huggingface.co/test/model"}
+]
+
 # ==================== GIT REPOSITORY TOOLS ====================
 
 class GitRepositoryTools:
-    """Tools for Git repository operations with permission-based access"""
+    """Tools for Git repository operations with enhanced security and rate limiting"""
     
     def __init__(self, project_memory: ProjectBrain):
         self.memory = project_memory
-        self.github_token = os.getenv("GITHUB_TOKEN", "")
+        self.github_token = self._get_github_token()
         self.temp_repos = {}  # Track cloned repositories
+        self.rate_limits = {}  # Track API rate limits
+        self.last_request_time = {}  # Track request timing
+        
+        # Rate limiting settings
+        self.max_requests_per_hour = 5000  # GitHub API limit
+        self.request_interval = 1.0  # Minimum seconds between requests
+        
+    def _get_github_token(self) -> str:
+        """Get GitHub token from environment or credential manager"""
+        # Try environment variable first
+        token = os.getenv("GITHUB_TOKEN", "")
+        if token:
+            return token
+        
+        # Try credential manager
+        if hasattr(self.memory, 'credential_manager'):
+            token = self.memory.credential_manager.get_credential('GITHUB_TOKEN')
+            if token:
+                return token
+        
+        return ""
+    
+    def _refresh_github_token(self) -> str:
+        """Refresh GitHub token from credential manager"""
+        self.github_token = self._get_github_token()
+        return self.github_token
+    
+    def _check_rate_limit(self, api_name: str) -> bool:
+        """Check if we can make a request without hitting rate limits"""
+        now = time.time()
+        
+        if api_name not in self.rate_limits:
+            self.rate_limits[api_name] = {'count': 0, 'reset_time': now + 3600}
+        
+        # Check if we need to reset
+        if now > self.rate_limits[api_name]['reset_time']:
+            self.rate_limits[api_name] = {'count': 0, 'reset_time': now + 3600}
+        
+        # Check if we're at the limit
+        if self.rate_limits[api_name]['count'] >= self.max_requests_per_hour:
+            return False
+        
+        # Check minimum interval
+        if api_name in self.last_request_time:
+            if now - self.last_request_time[api_name] < self.request_interval:
+                time.sleep(self.request_interval - (now - self.last_request_time[api_name]))
+        
+        return True
+    
+    def _update_rate_limit(self, api_name: str):
+        """Update rate limit counters"""
+        if api_name not in self.rate_limits:
+            self.rate_limits[api_name] = {'count': 0, 'reset_time': time.time() + 3600}
+        self.rate_limits[api_name]['count'] += 1
+        self.last_request_time[api_name] = time.time()
         
     def clone_repository(self, repo_url: str, branch: str = "main") -> str:
-        """Clone a Git repository to a temporary directory"""
+        """Clone a Git repository to a temporary directory with enhanced error handling"""
         try:
+            # Check rate limits
+            if not self._check_rate_limit('github_clone'):
+                return "Rate limit exceeded. Please wait before trying again."
+            
+            # Validate repository URL
+            if not self._validate_repo_url(repo_url):
+                return "Invalid repository URL format"
+            
             # Create temporary directory
             temp_dir = tempfile.mkdtemp(prefix="git_repo_")
             
-            # Handle file:// URLs for local repositories
+            # Check if git is available
+            if git is None:
+                return "GitPython not available. Install with: pip install gitpython"
+            
+            # Handle different repository types
             if repo_url.startswith("file://"):
+                # Local repository
                 local_path = repo_url[7:]  # Remove file:// prefix
+                if not os.path.exists(local_path):
+                    return f"Local repository not found: {local_path}"
                 repo = git.Repo.clone_from(local_path, temp_dir, branch=branch, depth=1)
-            elif self.github_token and "github.com" in repo_url:
-                # Use token for private repos
-                auth_url = repo_url.replace("https://", f"https://{self.github_token}@")
-                repo = git.Repo.clone_from(auth_url, temp_dir, branch=branch, depth=1)
+                
+            elif "github.com" in repo_url:
+                # GitHub repository with enhanced authentication
+                # Refresh token to get latest from credential manager
+                token = self._refresh_github_token()
+                if token:
+                    # Use token for private repos
+                    auth_url = repo_url.replace("https://", f"https://{token}@")
+                    repo = git.Repo.clone_from(auth_url, temp_dir, branch=branch, depth=1)
+                else:
+                    # Public repository
+                    repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch, depth=1)
+                    
             else:
+                # Other Git repositories
                 repo = git.Repo.clone_from(repo_url, temp_dir, branch=branch, depth=1)
+            
+            # Update rate limit
+            self._update_rate_limit('github_clone')
             
             # Store reference
             repo_name = repo_url.rstrip('/').split('/')[-1].replace('.git', '')
             if repo_name.startswith('test_repo_'):
-                # For test repositories, use a more descriptive name
                 repo_name = 'test_repository'
             
             self.temp_repos[repo_name] = {
@@ -64,24 +171,89 @@ class GitRepositoryTools:
                 'repo': repo,
                 'url': repo_url,
                 'branch': branch,
-                'cloned_at': datetime.now().isoformat()
+                'cloned_at': datetime.datetime.now().isoformat(),
+                'size': self._get_repo_size(temp_dir)
             }
             
-            # Log to memory
+            # Log to memory with security
             if 'git_operations' not in self.memory.memory:
                 self.memory.memory['git_operations'] = []
+            
+            # Sanitize URL for logging
+            sanitized_url = self._sanitize_url(repo_url)
+            
             self.memory.memory['git_operations'].append({
                 'operation': 'clone',
-                'repo_url': repo_url,
+                'repo_url': sanitized_url,
                 'temp_path': temp_dir,
-                'timestamp': datetime.now().isoformat()
+                'timestamp': datetime.datetime.now().isoformat(),
+                'success': True
             })
             self.memory._save()
             
-            return f"Repository cloned to {temp_dir}"
+            return f"Repository cloned successfully to {temp_dir}"
+            
+        except git.exc.GitCommandError as e:
+            error_msg = f"Git command failed: {str(e)}"
+            if "Authentication failed" in str(e):
+                error_msg = "Authentication failed. Please check your GitHub token."
+            elif "Repository not found" in str(e):
+                error_msg = "Repository not found or access denied."
+            elif "branch" in str(e).lower():
+                error_msg = f"Branch '{branch}' not found in repository."
+            
+            self._log_git_error('clone', repo_url, error_msg)
+            return error_msg
             
         except Exception as e:
-            return f"Failed to clone repository: {str(e)}"
+            error_msg = f"Failed to clone repository: {str(e)}"
+            self._log_git_error('clone', repo_url, error_msg)
+            return error_msg
+    
+    def _validate_repo_url(self, repo_url: str) -> bool:
+        """Validate repository URL format"""
+        valid_patterns = [
+            r'^https?://github\.com/[^/]+/[^/]+/?$',
+            r'^https?://gitlab\.com/[^/]+/[^/]+/?$',
+            r'^https?://bitbucket\.org/[^/]+/[^/]+/?$',
+            r'^file:///.+$',
+            r'^git@github\.com:[^/]+/[^/]+\.git$'
+        ]
+        
+        return any(re.match(pattern, repo_url) for pattern in valid_patterns)
+    
+    def _sanitize_url(self, url: str) -> str:
+        """Sanitize URL for logging (remove tokens)"""
+        if '@' in url:
+            # Remove authentication part
+            return re.sub(r'https?://[^@]+@', 'https://', url)
+        return url
+    
+    def _get_repo_size(self, repo_path: str) -> int:
+        """Get repository size in bytes"""
+        try:
+            total_size = 0
+            for dirpath, dirnames, filenames in os.walk(repo_path):
+                for filename in filenames:
+                    filepath = os.path.join(dirpath, filename)
+                    total_size += os.path.getsize(filepath)
+            return total_size
+        except:
+            return 0
+    
+    def _log_git_error(self, operation: str, repo_url: str, error: str):
+        """Log Git operation errors"""
+        if 'git_operations' not in self.memory.memory:
+            self.memory.memory['git_operations'] = []
+        
+        self.memory.memory['git_operations'].append({
+            'operation': operation,
+            'repo_url': self._sanitize_url(repo_url),
+            'error': error,
+            'timestamp': datetime.datetime.now().isoformat(),
+            'success': False
+        })
+        self.memory._save()
     
     def read_repository_file(self, repo_name: str, file_path: str) -> str:
         """Read a file from a cloned repository"""
@@ -342,21 +514,181 @@ Recent Commits:
 # ==================== RESEARCH TOOLS ====================
 
 class RealResearchTools:
-    """Enhanced research tools with GitHub content extraction"""
+    """Enhanced research tools with improved rate limiting and error handling"""
     
     def __init__(self, project_memory: ProjectBrain):
         self.memory = project_memory
-        self.github_token = os.getenv("GITHUB_TOKEN", "")
         self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        })
+        
+        # Rate limiting and caching
+        self.rate_limits = {}
+        self.cache = Cache('.cache')
+        self.cache_timeout = 3600  # 1 hour cache
+        
+        # API keys from credential manager
+        self.github_token = self._get_api_key('GITHUB_TOKEN')
         if self.github_token:
             self.session.headers.update({"Authorization": f"token {self.github_token}"})
+        
+        # Enhanced search configuration with credential manager
+        self.search_config = {
+            'medium_api_key': self._get_api_key('MEDIUM_API_KEY'),
+            'dev_to_api_key': self._get_api_key('DEV_TO_API_KEY'),
+            'hashnode_api_key': self._get_api_key('HASHNODE_API_KEY'),
+            'google_cse_id': self._get_api_key('GOOGLE_CSE_ID'),
+            'google_api_key': self._get_api_key('GOOGLE_API_KEY'),
+            'bing_api_key': self._get_api_key('BING_API_KEY'),
+            'arxiv_email': self._get_api_key('ARXIV_EMAIL'),
+            'rate_limit_delay': 1.0  # Delay between requests to avoid rate limits
+        }
+        
+        # Request tracking
+        self.request_count = 0
+        self.last_request_time = 0
+        self.min_request_interval = 0.5  # Minimum seconds between requests
+    
+    def _get_api_key(self, key_name: str) -> str:
+        """Get API key from environment or credential manager"""
+        # Try environment variable first
+        key = os.getenv(key_name, "")
+        if key:
+            return key
+        
+        # Try credential manager
+        if hasattr(self.memory, 'credential_manager'):
+            key = self.memory.credential_manager.get_credential(key_name)
+            if key:
+                return key
+        
+        return ""
+    
+    def _refresh_github_token(self) -> str:
+        """Refresh GitHub token from credential manager"""
+        self.github_token = self._get_api_key('GITHUB_TOKEN')
+        if self.github_token:
+            self.session.headers.update({"Authorization": f"token {self.github_token}"})
+        return self.github_token
+    
+    def _check_rate_limit(self, api_name: str, limit: int = 100) -> bool:
+        """Check if we can make a request without hitting rate limits"""
+        now = time.time()
+        
+        if api_name not in self.rate_limits:
+            self.rate_limits[api_name] = {'count': 0, 'reset_time': now + 3600}
+        
+        # Check if we need to reset
+        if now > self.rate_limits[api_name]['reset_time']:
+            self.rate_limits[api_name] = {'count': 0, 'reset_time': now + 3600}
+        
+        # Check if we're at the limit
+        if self.rate_limits[api_name]['count'] >= limit:
+            return False
+        
+        # Check minimum interval
+        if now - self.last_request_time < self.min_request_interval:
+            time.sleep(self.min_request_interval - (now - self.last_request_time))
+        
+        return True
+    
+    def _update_rate_limit(self, api_name: str):
+        """Update rate limit counters"""
+        if api_name not in self.rate_limits:
+            self.rate_limits[api_name] = {'count': 0, 'reset_time': time.time() + 3600}
+        
+        # Check minimum interval
+        now = time.time()
+        if hasattr(self, 'last_request_time') and self.last_request_time > 0:
+            if now - self.last_request_time < self.min_request_interval:
+                time.sleep(self.min_request_interval - (now - self.last_request_time))
+        
+        self.rate_limits[api_name]['count'] += 1
+        self.last_request_time = time.time()
+    
+    def _get_cached_result(self, key: str) -> Optional[str]:
+        """Get cached result if available and not expired"""
+        try:
+            result = self.cache.get(key)
+            if result:
+                return result
+        except:
+            pass
+        return None
+    
+    def _cache_result(self, key: str, result: str):
+        """Cache result with timeout"""
+        try:
+            self.cache.set(key, result, expire=self.cache_timeout)
+        except:
+            pass
     
     def web_search_integration(self, query: str) -> str:
-        """Enhanced web search with multiple sources"""
+        """Enhanced web search with caching and improved error handling"""
         print(f"🔍 Searching: {query}")
-        results = []
         
-        # DuckDuckGo search
+        # Check cache first
+        cache_key = f"search_{hashlib.md5(query.encode()).hexdigest()}"
+        cached_result = self._get_cached_result(cache_key)
+        if cached_result:
+            print("📋 Using cached search result")
+            return cached_result
+        
+        # Check rate limits
+        if not self._check_rate_limit('web_search', 50):
+            return "Rate limit exceeded. Please wait before searching again."
+        
+        try:
+            # Use the new centralized search service
+            from search_service import SearchService, create_search_config
+            
+            # Create search service with configuration
+            config = create_search_config()
+            search_service = SearchService(config)
+            
+            # Run async search
+            import asyncio
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            try:
+                # Get aggregated results from all providers
+                results = loop.run_until_complete(search_service.search_aggregated(query, max_results=8))
+                
+                if results:
+                    formatted_results = search_service.format_results(results)
+                    # Cache the result
+                    self._cache_result(cache_key, formatted_results)
+                    self._update_rate_limit('web_search')
+                    return formatted_results
+                else:
+                    # Fallback to basic DuckDuckGo search
+                    fallback_result = self._fallback_duckduckgo_search(query)
+                    self._cache_result(cache_key, fallback_result)
+                    self._update_rate_limit('web_search')
+                    return fallback_result
+                    
+            finally:
+                loop.close()
+                
+        except ImportError:
+            print("Search service not available, using fallback")
+            fallback_result = self._fallback_duckduckgo_search(query)
+            self._cache_result(cache_key, fallback_result)
+            self._update_rate_limit('web_search')
+            return fallback_result
+            
+        except Exception as e:
+            print(f"Enhanced search failed: {e}")
+            # Fallback to basic search
+            fallback_result = self._fallback_duckduckgo_search(query)
+            self._cache_result(cache_key, fallback_result)
+            self._update_rate_limit('web_search')
+            return fallback_result
+    
+    def _fallback_duckduckgo_search(self, query: str) -> str:
+        """Fallback to basic DuckDuckGo search"""
         try:
             response = requests.get(
                 "https://api.duckduckgo.com/",
@@ -365,6 +697,7 @@ class RealResearchTools:
             )
             data = response.json()
             
+            results = []
             if data.get('AbstractText'):
                 results.append(f"Summary: {data['AbstractText'][:500]}...")
             if data.get('RelatedTopics'):
@@ -372,92 +705,423 @@ class RealResearchTools:
                     if isinstance(topic, dict) and 'Text' in topic:
                         results.append(f"Related: {topic['Text'][:200]}...")
             
+            # Add suggestion for X search
+            if any(term in query.lower() for term in ['2025', 'latest', 'recent', 'cloudflare', 'workers']):
+                results.append(f"\n💡 For latest discussions, search X (Twitter): {query}")
+            
+            return "\n".join(results) if results else f"No results. Try manual search: {query}"
+            
         except Exception as e:
-            results.append(f"DuckDuckGo failed: {e}")
+            return f"Search failed: {e}"
+    
+    def _google_custom_search(self, query: str) -> str:
+        """Google Custom Search API for developer-focused results"""
+        if not self.search_config['google_cse_id'] or not self.search_config['google_api_key']:
+            return ""
         
-        # Add suggestion for X search
-        if any(term in query.lower() for term in ['2025', 'latest', 'recent', 'cloudflare', 'workers']):
-            results.append(f"\n💡 For latest discussions, search X (Twitter): {query}")
+        try:
+            # Add developer-focused sites to search
+            developer_sites = [
+                "site:medium.com",
+                "site:dev.to", 
+                "site:hashnode.dev",
+                "site:stackoverflow.com",
+                "site:reddit.com/r/programming",
+                "site:reddit.com/r/Python",
+                "site:reddit.com/r/javascript",
+                "site:reddit.com/r/webdev",
+                "site:news.ycombinator.com",
+                "site:techcrunch.com",
+                "site:venturebeat.com"
+            ]
+            
+            enhanced_query = f"{query} {' '.join(developer_sites[:3])}"  # Limit to avoid query length issues
+            
+            response = requests.get(
+                "https://www.googleapis.com/customsearch/v1",
+                params={
+                    "key": self.search_config['google_api_key'],
+                    "cx": self.search_config['google_cse_id'],
+                    "q": enhanced_query,
+                    "num": 5,
+                    "dateRestrict": "m1"  # Last month
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = []
+                
+                for item in data.get('items', [])[:3]:
+                    title = item.get('title', '')
+                    snippet = item.get('snippet', '')
+                    link = item.get('link', '')
+                    results.append(f"📄 {title}\n{snippet[:200]}...\n🔗 {link}")
+                
+                return "\n\n".join(results)
+            
+        except Exception as e:
+            print(f"Google Custom Search error: {e}")
         
-        return "\n".join(results) if results else f"No results. Try manual search: {query}"
+        return ""
+    
+    def _bing_search(self, query: str) -> str:
+        """Bing Search API for additional web results"""
+        if not self.search_config['bing_api_key']:
+            return ""
+        
+        try:
+            # Add developer focus to query
+            developer_query = f"{query} programming development coding"
+            
+            response = requests.get(
+                "https://api.bing.microsoft.com/v7.0/search",
+                headers={"Ocp-Apim-Subscription-Key": self.search_config['bing_api_key']},
+                params={
+                    "q": developer_query,
+                    "count": 5,
+                    "mkt": "en-US",
+                    "freshness": "Day"
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = []
+                
+                for item in data.get('webPages', {}).get('value', [])[:3]:
+                    name = item.get('name', '')
+                    snippet = item.get('snippet', '')
+                    url = item.get('url', '')
+                    results.append(f"🔍 {name}\n{snippet[:200]}...\n🔗 {url}")
+                
+                return "\n\n".join(results)
+            
+        except Exception as e:
+            print(f"Bing Search error: {e}")
+        
+        return ""
+    
+    def _search_medium(self, query: str) -> str:
+        """Search Medium articles for developer content"""
+        try:
+            # Medium RSS feed search (no API key required)
+            medium_urls = [
+                "https://medium.com/feed/tag/python",
+                "https://medium.com/feed/tag/javascript", 
+                "https://medium.com/feed/tag/web-development",
+                "https://medium.com/feed/tag/ai",
+                "https://medium.com/feed/tag/machine-learning"
+            ]
+            
+            results = []
+            for feed_url in medium_urls[:2]:  # Limit to avoid rate limits
+                try:
+                    response = requests.get(feed_url, timeout=10)
+                    if response.status_code == 200:
+                        # Simple XML parsing for RSS
+                        import xml.etree.ElementTree as ET
+                        root = ET.fromstring(response.content)
+                        
+                        for item in root.findall('.//item')[:3]:
+                            title = item.find('title').text if item.find('title') is not None else ""
+                            description = item.find('description').text if item.find('description') is not None else ""
+                            link = item.find('link').text if item.find('link') is not None else ""
+                            
+                            # Check if query terms are in title or description
+                            if any(term.lower() in title.lower() or term.lower() in description.lower() 
+                                   for term in query.split()):
+                                results.append(f"📝 {title}\n{description[:150]}...\n🔗 {link}")
+                
+                except Exception as e:
+                    print(f"Medium RSS error: {e}")
+                    continue
+                
+                time.sleep(self.search_config['rate_limit_delay'])
+            
+            return "\n\n".join(results[:3])
+            
+        except Exception as e:
+            print(f"Medium search error: {e}")
+            return ""
+    
+    def _search_dev_to(self, query: str) -> str:
+        """Search Dev.to articles"""
+        try:
+            # Dev.to API (no key required for public articles)
+            response = requests.get(
+                "https://dev.to/api/articles",
+                params={
+                    "tag": "python",  # Focus on Python for now
+                    "top": 10,
+                    "per_page": 5
+                },
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                articles = response.json()
+                results = []
+                
+                for article in articles:
+                    title = article.get('title', '')
+                    description = article.get('description', '')
+                    url = article.get('url', '')
+                    
+                    # Check if query terms are in title or description
+                    if any(term.lower() in title.lower() or term.lower() in description.lower() 
+                           for term in query.split()):
+                        results.append(f"💻 {title}\n{description[:150]}...\n🔗 {url}")
+                
+                return "\n\n".join(results[:3])
+            
+        except Exception as e:
+            print(f"Dev.to search error: {e}")
+        
+        return ""
+    
+    def _search_hashnode(self, query: str) -> str:
+        """Search Hashnode articles"""
+        try:
+            # Hashnode GraphQL API
+            graphql_query = """
+            query GetArticles($tag: String!) {
+                articles(first: 5, filter: {tagSlug: $tag}) {
+                    edges {
+                        node {
+                            title
+                            brief
+                            url
+                            author {
+                                name
+                            }
+                        }
+                    }
+                }
+            }
+            """
+            
+            # Try different tags related to the query
+            tags = ["python", "javascript", "web-development", "ai"]
+            results = []
+            
+            for tag in tags[:2]:  # Limit to avoid rate limits
+                try:
+                    response = requests.post(
+                        "https://api.hashnode.com/",
+                        json={
+                            "query": graphql_query,
+                            "variables": {"tag": tag}
+                        },
+                        timeout=10
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        articles = data.get('data', {}).get('articles', {}).get('edges', [])
+                        
+                        for edge in articles:
+                            article = edge['node']
+                            title = article.get('title', '')
+                            brief = article.get('brief', '')
+                            url = article.get('url', '')
+                            
+                            # Check if query terms are in title or brief
+                            if any(term.lower() in title.lower() or term.lower() in brief.lower() 
+                                   for term in query.split()):
+                                results.append(f"📚 {title}\n{brief[:150]}...\n🔗 {url}")
+                
+                except Exception as e:
+                    print(f"Hashnode search error for tag {tag}: {e}")
+                    continue
+                
+                time.sleep(self.search_config['rate_limit_delay'])
+            
+            return "\n\n".join(results[:3])
+            
+        except Exception as e:
+            print(f"Hashnode search error: {e}")
+            return ""
+    
+    def _search_developer_blogs(self, query: str) -> str:
+        """Search popular developer blogs and tech sites"""
+        try:
+            # List of popular developer blogs and tech sites
+            developer_sites = [
+                "https://blog.logrocket.com/feed/",
+                "https://css-tricks.com/feed/",
+                "https://www.smashingmagazine.com/feed/",
+                "https://alistapart.com/main/feed/",
+                "https://web.dev/feed.xml",
+                "https://developers.google.com/web/updates/rss.xml",
+                "https://reactjs.org/feed.xml",
+                "https://vuejs.org/feed.xml",
+                "https://angular.io/feed.xml"
+            ]
+            
+            results = []
+            for site_url in developer_sites[:3]:  # Limit to avoid rate limits
+                try:
+                    response = requests.get(site_url, timeout=10)
+                    if response.status_code == 200:
+                        # Simple RSS parsing
+                        import xml.etree.ElementTree as ET
+                        root = ET.fromstring(response.content)
+                        
+                        for item in root.findall('.//item')[:2]:
+                            title = item.find('title').text if item.find('title') is not None else ""
+                            description = item.find('description').text if item.find('description') is not None else ""
+                            link = item.find('link').text if item.find('link') is not None else ""
+                            
+                            # Check if query terms are in title or description
+                            if any(term.lower() in title.lower() or term.lower() in description.lower() 
+                                   for term in query.split()):
+                                results.append(f"🌐 {title}\n{description[:150]}...\n🔗 {link}")
+                
+                except Exception as e:
+                    print(f"Blog search error for {site_url}: {e}")
+                    continue
+                
+                time.sleep(self.search_config['rate_limit_delay'])
+            
+            return "\n\n".join(results[:3])
+            
+        except Exception as e:
+            print(f"Developer blog search error: {e}")
+            return ""
+    
+    def _search_arxiv(self, query: str) -> str:
+        """Search arXiv for academic papers"""
+        if not self.search_config['arxiv_email']:
+            return ""
+        
+        try:
+            import arxiv
+            
+            # Search for papers related to the query
+            search = arxiv.Search(
+                query=f"{query} programming development",
+                max_results=3,
+                sort_by=arxiv.SortCriterion.SubmittedDate
+            )
+            
+            results = []
+            for result in search.results():
+                title = result.title
+                summary = result.summary
+                pdf_url = result.pdf_url
+                published = result.published.strftime("%Y-%m-%d")
+                
+                results.append(f"📄 {title}\nPublished: {published}\n{summary[:200]}...\n🔗 {pdf_url}")
+            
+            return "\n\n".join(results)
+            
+        except Exception as e:
+            print(f"arXiv search error: {e}")
+            return ""
     
     def x_search(self, query: str) -> str:
-        """Search X (Twitter) for latest discussions"""
-        # For now, return search suggestion
-        # In production, would use X API v2
+        """Enhanced X (Twitter) search with developer focus"""
+        # For now, return search suggestion with developer-focused queries
         x_queries = [
             f'"{query}" lang:en -filter:replies min_faves:10',
             f'{query} (announcement OR released OR update)',
-            f'{query} filter:links'
+            f'{query} filter:links',
+            f'{query} (programming OR coding OR developer)',
+            f'{query} (python OR javascript OR webdev)'
         ]
         
-        return f"""X (Twitter) search suggestions for latest info:
+        return f"""X (Twitter) search suggestions for latest developer discussions:
         
 1. General discussion: {x_queries[0]}
 2. Announcements: {x_queries[1]}  
 3. With links: {x_queries[2]}
+4. Developer focus: {x_queries[3]}
+5. Tech-specific: {x_queries[4]}
 
 Recent relevant topics might include:
 - Cloudflare Workers Python support (Pyodide beta, stdlib only)
 - Claude 4 capabilities for coding
 - Browser automation detection methods
 - Edge deployment patterns
+- Latest Python/JavaScript frameworks
+- AI coding assistants and tools
 """
     
-    def github_code_search(self, query: str) -> List[Dict[str, str]]:
-        """Search GitHub for code and repos"""
-        results = []
+    @retry(wait=wait_exponential(min=4, max=10), stop=stop_after_attempt(3))
+    async def github_code_search(self, query: str) -> List[Dict[str, str]]:
+        """Async GitHub search with backoff/caching"""
+        # Check if external APIs are disabled
+        if os.getenv('NO_EXTERNAL'):
+            return MOCK_GITHUB_RESULTS
         
+        # Check cache first
+        cache_key = f'github_{query}'
+        if cached_result := cache.get(cache_key):
+            return cached_result
+        
+        results = []
         headers = {"Authorization": f"token {self.github_token}"} if self.github_token else {}
         
-        # Search repositories
         try:
-            response = requests.get(
-                "https://api.github.com/search/repositories",
-                params={"q": query, "sort": "stars", "per_page": 3},
-                headers=headers,
-                timeout=5
-            )
+            async with aiohttp.ClientSession() as session:
+                # Search repositories
+                repo_url = "https://api.github.com/search/repositories"
+                params = {"q": query, "sort": "stars", "per_page": 3}
+                async with session.get(repo_url, params=params, headers=headers) as resp:
+                    # Check rate limit
+                    if int(resp.headers.get('X-RateLimit-Remaining', 1)) < 1:
+                        raise ValueError("GitHub rate limit hit")
+                    
+                    if resp.status == 200:
+                        repo_data = await resp.json()
+                        repos = repo_data.get('items', [])
+                        for repo in repos:
+                            results.append({
+                                'type': 'repo',
+                                'name': repo['full_name'],
+                                'stars': repo['stargazers_count'],
+                                'description': repo['description'],
+                                'url': repo['html_url']
+                            })
+                    elif resp.status == 401:
+                        results.append({
+                            'type': 'error',
+                            'message': 'GitHub token invalid. Using public rate limit (10/min).'
+                        })
+                
+                # Search code snippets
+                if self.github_token and len(results) < 5:
+                    code_url = "https://api.github.com/search/code"
+                    code_params = {"q": f"{query} language:python", "per_page": 2}
+                    async with session.get(code_url, params=code_params, headers=headers) as resp:
+                        # Check rate limit
+                        if int(resp.headers.get('X-RateLimit-Remaining', 1)) < 1:
+                            raise ValueError("GitHub rate limit hit")
+                        
+                        if resp.status == 200:
+                            code_data = await resp.json()
+                            items = code_data.get('items', [])
+                            for item in items:
+                                results.append({
+                                    'type': 'code',
+                                    'file': item['name'],
+                                    'repo': item['repository']['full_name'],
+                                    'path': item['path']
+                                })
             
-            if response.status_code == 200:
-                repos = response.json().get('items', [])
-                for repo in repos:
-                    results.append({
-                        'type': 'repo',
-                        'name': repo['full_name'],
-                        'stars': repo['stargazers_count'],
-                        'description': repo['description'],
-                        'url': repo['html_url']
-                    })
-            elif response.status_code == 401:
-                results.append({
-                    'type': 'error',
-                    'message': 'GitHub token invalid. Using public rate limit (10/min).'
-                })
+            # Cache results for 1 hour
+            cache.set(cache_key, results, expire=3600)
+            return results
+            
+        except aiohttp.ClientTimeout:
+            results.append({'type': 'error', 'message': 'GitHub API timeout'})
+        except aiohttp.ClientError as e:
+            results.append({'type': 'error', 'message': f'GitHub API request failed: {e}'})
         except Exception as e:
             results.append({'type': 'error', 'message': f'GitHub search failed: {e}'})
-        
-        # Search code snippets
-        if self.github_token and len(results) < 5:
-            try:
-                code_response = requests.get(
-                    "https://api.github.com/search/code",
-                    params={"q": f"{query} language:python", "per_page": 2},
-                    headers=headers,
-                    timeout=5
-                )
-                
-                if code_response.status_code == 200:
-                    items = code_response.json().get('items', [])
-                    for item in items:
-                        results.append({
-                            'type': 'code',
-                            'file': item['name'],
-                            'repo': item['repository']['full_name'],
-                            'path': item['path']
-                        })
-            except:
-                pass
         
         return results
     
@@ -1071,19 +1735,7 @@ ADAPT TO YOUR PROJECT:
         
         return sorted(list(deps))
     
-    def _parse_requirements(self, content: str) -> set:
-        """Parse requirements.txt using regex for cleaner extraction"""
-        deps = set()
-        # Regex to match package names with version constraints
-        pkg_pattern = r'^([a-zA-Z0-9_-]+)(?:[<>=!~].*)?$'
-        
-        for line in content.split('\n'):
-            line = line.strip()
-            if line and not line.startswith('#'):
-                match = re.match(pkg_pattern, line)
-                if match:
-                    deps.add(match.group(1))
-        return deps
+
     
     def _parse_pyproject(self, content: str) -> set:
         """Parse pyproject.toml using tomllib"""
@@ -1248,6 +1900,63 @@ class BuildTools:
                     deps.append(match.group(1))
         return list(set(deps))  # Unique
     
+    def _parse_requirements(self, content: str) -> set:
+        """Parse requirements.txt using regex for cleaner extraction"""
+        deps = set()
+        # Regex to match package names with version constraints
+        pkg_pattern = r'^([a-zA-Z0-9_-]+)(?:[<>=!~].*)?$'
+        
+        for line in content.split('\n'):
+            line = line.strip()
+            if line and not line.startswith('#'):
+                match = re.match(pkg_pattern, line)
+                if match:
+                    deps.add(match.group(1))
+        return deps
+    
+    def _parse_pyproject(self, content: str) -> set:
+        """Parse pyproject.toml using tomllib"""
+        deps = set()
+        try:
+            data = tomllib.loads(content)
+            # Extract dependencies from various possible locations
+            if 'tool' in data and 'poetry' in data['tool']:
+                poetry_deps = data['tool']['poetry'].get('dependencies', {})
+                deps.update(poetry_deps.keys())
+            if 'project' in data and 'dependencies' in data['project']:
+                deps.update(data['project']['dependencies'])
+        except Exception:
+            # Fallback to basic parsing if tomllib fails
+            in_deps = False
+            for line in content.split('\n'):
+                if '[tool.poetry.dependencies]' in line:
+                    in_deps = True
+                elif '[' in line:
+                    in_deps = False
+                elif in_deps and '=' in line:
+                    pkg = line.split('=')[0].strip().strip('"')
+                    if pkg and pkg != 'python':
+                        deps.add(pkg)
+        return deps
+    
+    def _parse_pipfile(self, content: str) -> set:
+        """Parse Pipfile using regex for cleaner extraction"""
+        deps = set()
+        # Regex to match package definitions in Pipfile
+        pkg_pattern = r'^([a-zA-Z0-9_-]+)\s*=\s*["\']?[^"\']*["\']?$'
+        
+        in_packages = False
+        for line in content.split('\n'):
+            if '[packages]' in line:
+                in_packages = True
+            elif '[' in line:
+                in_packages = False
+            elif in_packages:
+                match = re.match(pkg_pattern, line.strip())
+                if match:
+                    deps.add(match.group(1))
+        return deps
+    
     def run_linter(self, files: List[str] = None, auto_fix: bool = False) -> Dict[str, Any]:
         """Run ruff linter with optional auto-fix"""
         if files is None:
@@ -1323,8 +2032,21 @@ def create_research_tools(brain: ProjectBrain):
     @tool
     def github_search(query: str) -> str:
         """Search GitHub for code examples and repositories"""
-        results = research_tools.github_code_search(query)
-        return json.dumps(results, indent=2)
+        import asyncio
+        try:
+            # Try to get the current event loop
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're in an async context, we can't use run_until_complete
+                # Return a placeholder response
+                return json.dumps([{"type": "error", "message": "Async context not supported for GitHub search"}], indent=2)
+            else:
+                # We can use run_until_complete
+                results = loop.run_until_complete(research_tools.github_code_search(query))
+                return json.dumps(results, indent=2)
+        except RuntimeError:
+            # No event loop available, return placeholder
+            return json.dumps([{"type": "error", "message": "No event loop available for GitHub search"}], indent=2)
     
     @tool
     def analyze_github_repo(repo_url: str) -> str:

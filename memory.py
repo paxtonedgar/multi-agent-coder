@@ -9,6 +9,9 @@ import glob
 import ast
 import re
 import uuid
+import base64
+import hashlib
+import hmac
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple, Union
 import requests
@@ -16,10 +19,225 @@ import numpy as np
 import networkx as nx
 from dataclasses import dataclass, asdict
 from enum import Enum
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import secrets
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, START, END
 from typing_extensions import TypedDict, Annotated
+
+# ==================== SECURITY CONFIGURATION ====================
+
+class SecurityConfig:
+    """Security configuration for data encryption and privacy"""
+    
+    def __init__(self):
+        self.encryption_key = self._get_or_create_encryption_key()
+        self.cipher_suite = Fernet(self.encryption_key)
+        self.sensitive_fields = {
+            'api_key', 'api_keys', 'token', 'tokens', 'password', 'passwords', 'credential', 'credentials', 
+            'private_key', 'private_keys', 'secret', 'secrets', 'auth'
+        }
+        self.sanitization_patterns = [
+            r'(password["\']?\s*[:=]\s*["\'])[^"\']*(["\'])',
+            r'(token["\']?\s*[:=]\s*["\'])[^"\']*(["\'])',
+            r'(api_key["\']?\s*[:=]\s*["\'])[^"\']*(["\'])',
+            r'(secret["\']?\s*[:=]\s*["\'])[^"\']*(["\'])',
+            r'(private_key["\']?\s*[:=]\s*["\'])[^"\']*(["\'])',
+        ]
+    
+    def _get_or_create_encryption_key(self) -> bytes:
+        """Get existing encryption key or create new one"""
+        key_file = os.path.join(os.path.dirname(__file__), '.ai', '.encryption_key')
+        os.makedirs(os.path.dirname(key_file), exist_ok=True)
+        
+        if os.path.exists(key_file):
+            try:
+                with open(key_file, 'rb') as f:
+                    return f.read()
+            except:
+                pass
+        
+        # Create new key
+        key = Fernet.generate_key()
+        with open(key_file, 'wb') as f:
+            f.write(key)
+        return key
+    
+    def encrypt_data(self, data: str) -> str:
+        """Encrypt sensitive data"""
+        try:
+            encrypted = self.cipher_suite.encrypt(data.encode())
+            return base64.b64encode(encrypted).decode()
+        except Exception as e:
+            print(f"Encryption failed: {e}")
+            return data
+    
+    def decrypt_data(self, encrypted_data: str) -> str:
+        """Decrypt sensitive data"""
+        try:
+            encrypted_bytes = base64.b64decode(encrypted_data.encode())
+            decrypted = self.cipher_suite.decrypt(encrypted_bytes)
+            return decrypted.decode()
+        except Exception as e:
+            print(f"Decryption failed: {e}")
+            return encrypted_data
+    
+    def is_sensitive_field(self, field_name: str) -> bool:
+        """Check if a field contains sensitive data"""
+        field_lower = field_name.lower()
+        return any(sensitive in field_lower for sensitive in self.sensitive_fields)
+    
+    def sanitize_content(self, content: str) -> str:
+        """Sanitize content by removing sensitive patterns"""
+        sanitized = content
+        for pattern in self.sanitization_patterns:
+            sanitized = re.sub(pattern, r'\1[REDACTED]\2', sanitized, flags=re.IGNORECASE)
+        return sanitized
+
+# ==================== CREDENTIAL MANAGEMENT ====================
+
+class CredentialManager:
+    """Manages API keys and credentials securely"""
+    
+    def __init__(self, security_config: SecurityConfig):
+        self.security = security_config
+        self.credentials_file = os.path.join(os.path.dirname(__file__), '.ai', '.credentials')
+        self.credentials = self._load_credentials()
+    
+    def _load_credentials(self) -> Dict[str, str]:
+        """Load encrypted credentials from file"""
+        if not os.path.exists(self.credentials_file):
+            return {}
+        
+        try:
+            with open(self.credentials_file, 'r') as f:
+                encrypted_data = json.load(f)
+            
+            credentials = {}
+            for key, encrypted_value in encrypted_data.items():
+                credentials[key] = self.security.decrypt_data(encrypted_value)
+            return credentials
+        except Exception as e:
+            print(f"Failed to load credentials: {e}")
+            return {}
+    
+    def _save_credentials(self):
+        """Save encrypted credentials to file"""
+        try:
+            encrypted_data = {}
+            for key, value in self.credentials.items():
+                encrypted_data[key] = self.security.encrypt_data(value)
+            
+            with open(self.credentials_file, 'w') as f:
+                json.dump(encrypted_data, f)
+        except Exception as e:
+            print(f"Failed to save credentials: {e}")
+    
+    def get_credential(self, key: str) -> Optional[str]:
+        """Get a credential by key"""
+        return self.credentials.get(key)
+    
+    def set_credential(self, key: str, value: str):
+        """Set a credential securely"""
+        self.credentials[key] = value
+        self._save_credentials()
+    
+    def remove_credential(self, key: str):
+        """Remove a credential"""
+        if key in self.credentials:
+            del self.credentials[key]
+            self._save_credentials()
+    
+    def list_credentials(self) -> List[str]:
+        """List all credential keys (without values)"""
+        return list(self.credentials.keys())
+    
+    def rotate_credential(self, key: str, new_value: str):
+        """Rotate a credential to a new value"""
+        if key in self.credentials:
+            self.set_credential(key, new_value)
+            return f"Credential '{key}' rotated successfully"
+        else:
+            return f"Credential '{key}' not found"
+
+# ==================== CUSTOM JSON ENCODER ====================
+
+class SecureEncoder(json.JSONEncoder):
+    """Custom JSON encoder with security features"""
+    
+    def __init__(self, security_config: SecurityConfig, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.security = security_config
+    
+    def default(self, obj):
+        # Handle FAISS index
+        if hasattr(obj, 'ntotal') and hasattr(obj, 'reconstruct'):
+            try:
+                # Convert FAISS index to serializable format
+                vectors = []
+                for i in range(min(obj.ntotal, 1000)):  # Limit to first 1000 vectors
+                    try:
+                        vector = obj.reconstruct(i).tolist()
+                        vectors.append(vector)
+                    except:
+                        continue
+                return {
+                    'type': 'faiss_index',
+                    'ntotal': obj.ntotal,
+                    'vectors': vectors[:100]  # Keep only first 100 for memory
+                }
+            except:
+                return {'type': 'faiss_index', 'error': 'Could not serialize'}
+        
+        # Handle NetworkX graphs
+        if isinstance(obj, nx.Graph) or isinstance(obj, nx.DiGraph):
+            try:
+                return nx.to_dict_of_dicts(obj)
+            except:
+                return {'type': 'networkx_graph', 'nodes': list(obj.nodes()), 'edges': list(obj.edges())}
+        
+        # Handle objects with __dict__
+        if hasattr(obj, '__dict__'):
+            return obj.__dict__
+        
+        # Handle numpy arrays
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        
+        # Handle numpy scalars
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        
+        # Handle dict objects (should not happen but just in case)
+        if isinstance(obj, dict):
+            return obj
+        
+        return super().default(obj)
+    
+    def encode(self, obj):
+        """Override encode to sanitize sensitive data"""
+        if isinstance(obj, dict):
+            obj = self._sanitize_dict(obj)
+        return super().encode(obj)
+    
+    def _sanitize_dict(self, data: Dict) -> Dict:
+        """Recursively sanitize dictionary for sensitive data"""
+        sanitized = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                sanitized[key] = self._sanitize_dict(value)
+            elif isinstance(value, list):
+                sanitized[key] = [self._sanitize_dict(item) if isinstance(item, dict) else item for item in value]
+            elif isinstance(value, str) and self.security.is_sensitive_field(key):
+                sanitized[key] = self.security.encrypt_data(value)
+            else:
+                sanitized[key] = value
+        return sanitized
 
 # ==================== ENHANCED STATE DEFINITIONS ====================
 
@@ -93,6 +311,16 @@ class ProjectBrain:
     def __init__(self, project_path: str = "."):
         self.project_path = project_path
         self.brain_file = f"{project_path}/.ai/brain.json"
+        
+        # Initialize security components
+        self.security_config = SecurityConfig()
+        self.credential_manager = CredentialManager(self.security_config)
+        
+        # Memory management settings (set before loading)
+        self.max_memory_nodes = 10000  # Limit total memory nodes
+        self.max_node_size = 1000000   # 1MB per node
+        self.compression_enabled = True
+        
         self.memory = self._load_or_init()
         
         # Initialize graph structures
@@ -113,8 +341,15 @@ class ProjectBrain:
         if os.path.exists(self.brain_file):
             try:
                 with open(self.brain_file) as f:
-                    return json.load(f)
-            except:
+                    memory_data = json.load(f)
+                
+                # Decompress memory if needed
+                if self.compression_enabled:
+                    self._decompress_memory()
+                
+                return memory_data
+            except Exception as e:
+                print(f"Failed to load brain: {e}")
                 pass
         
         return {
@@ -161,21 +396,61 @@ class ProjectBrain:
         self.reflection_graph = self.conversation_tree.subgraph(reflection_nodes).copy()
     
     def _init_faiss(self):
-        """Initialize FAISS index for vector search"""
+        """Initialize FAISS index for vector search with comprehensive error handling"""
         try:
             import faiss
             # Create index for 1536-dimensional embeddings (OpenAI text-embedding-3-small)
             self.faiss_index = faiss.IndexFlatIP(1536)
-            print("✅ FAISS index initialized for vector search")
+            
+            # Load existing embeddings into FAISS
+            if self.memory.get('memory_nodes'):
+                embeddings = []
+                for node in self.memory['memory_nodes']:
+                    if 'embedding' in node and node['embedding']:
+                        embeddings.append(node['embedding'])
+                
+                if embeddings:
+                    embedding_array = np.array(embeddings, dtype=np.float32)
+                    self.faiss_index.add(embedding_array)
+                    print(f"✅ FAISS index initialized with {len(embeddings)} existing embeddings")
+                else:
+                    print("✅ FAISS index initialized (no existing embeddings)")
+            else:
+                print("✅ FAISS index initialized for vector search")
+                
         except ImportError:
             print("⚠️  FAISS not available, using basic similarity search")
+            self.faiss_index = None
+        except Exception as e:
+            print(f"⚠️  FAISS initialization failed: {e}, using basic similarity search")
             self.faiss_index = None
     
     def add_node(self, node_type: NodeType, content: str, parent_id: str = None, 
                  sources: List[str] = None, metadata: Dict[str, Any] = None) -> str:
-        """Add a new node to the memory tree"""
+        """Add a new node to the memory tree with scalability checks"""
+        
+        # Check content size limit
+        if len(content) > self.max_node_size:
+            content = content[:self.max_node_size] + "... [TRUNCATED]"
+            print(f"⚠️  Node content truncated to {self.max_node_size} characters")
+        
+        # Check memory node limit before adding
+        if len(self.memory['memory_nodes']) >= self.max_memory_nodes:
+            nodes_to_remove = len(self.memory['memory_nodes']) - self.max_memory_nodes + 1
+            self._prune_oldest_nodes(nodes_to_remove)
+            print(f"⚠️  Memory limit reached, pruned {nodes_to_remove} oldest nodes")
+        
         node_id = str(uuid.uuid4())
         embedding = self._create_embedding(content)
+        
+        # Encrypt sensitive data in metadata
+        encrypted_metadata = {}
+        if metadata:
+            for key, value in metadata.items():
+                if self.security_config.is_sensitive_field(key) and isinstance(value, str):
+                    encrypted_metadata[key] = self.security_config.encrypt_data(value)
+                else:
+                    encrypted_metadata[key] = value
         
         node = MemoryNode(
             id=node_id,
@@ -185,7 +460,7 @@ class ProjectBrain:
             timestamp=datetime.now().isoformat(),
             parent_id=parent_id,
             sources=sources or [],
-            metadata=metadata or {}
+            metadata=encrypted_metadata or {}
         )
         
         # Add to graph
@@ -204,8 +479,8 @@ class ProjectBrain:
                 import faiss
                 embedding_array = np.array([embedding], dtype=np.float32)
                 self.faiss_index.add(embedding_array)
-            except:
-                pass
+            except Exception as e:
+                print(f"⚠️  Failed to add embedding to FAISS: {e}")
         
         # Update reflection graph if this is a reflection
         if node_type == NodeType.REFLECTION:
@@ -215,6 +490,56 @@ class ProjectBrain:
         
         self._save()
         return node_id
+    
+    def _prune_oldest_nodes(self, count: int = 100):
+        """Remove oldest memory nodes to maintain size limits"""
+        if len(self.memory['memory_nodes']) <= count:
+            return
+        
+        # Sort by timestamp and remove oldest
+        sorted_nodes = sorted(
+            self.memory['memory_nodes'], 
+            key=lambda x: x.get('timestamp', '1970-01-01')
+        )
+        
+        nodes_to_remove = sorted_nodes[:count]
+        nodes_to_keep = sorted_nodes[count:]
+        
+        # Remove from graphs
+        for node in nodes_to_remove:
+            node_id = node['id']
+            if node_id in self.conversation_tree:
+                self.conversation_tree.remove_node(node_id)
+            if node_id in self.reflection_graph:
+                self.reflection_graph.remove_node(node_id)
+        
+        # Update memory
+        self.memory['memory_nodes'] = nodes_to_keep
+        
+        # Rebuild FAISS index if needed
+        if self.faiss_index is not None:
+            self._rebuild_faiss_index()
+    
+    def _rebuild_faiss_index(self):
+        """Rebuild FAISS index from current memory nodes"""
+        try:
+            import faiss
+            # Create new index
+            self.faiss_index = faiss.IndexFlatIP(1536)
+            
+            # Add all current embeddings
+            embeddings = []
+            for node in self.memory['memory_nodes']:
+                if 'embedding' in node and node['embedding']:
+                    embeddings.append(node['embedding'])
+            
+            if embeddings:
+                embedding_array = np.array(embeddings, dtype=np.float32)
+                self.faiss_index.add(embedding_array)
+                print(f"✅ FAISS index rebuilt with {len(embeddings)} embeddings")
+        except Exception as e:
+            print(f"⚠️  Failed to rebuild FAISS index: {e}")
+            self.faiss_index = None
     
     def add_reflection(self, content: str, parent_id: str = None, sources: List[str] = None) -> str:
         """Add a new reflection node"""
@@ -361,22 +686,140 @@ class ProjectBrain:
             norm2 = sum(b * b for b in vec2) ** 0.5
             return dot_product / (norm1 * norm2 + 1e-10)
     
-    def retrieve_tree(self, query: str, max_depth: int = 5) -> Dict[str, Any]:
-        """Retrieve relevant tree context for a query"""
+    def retrieve_tree(self, query: str, max_depth: int = 5, page: int = 1, page_size: int = 50) -> Dict[str, Any]:
+        """Retrieve relevant tree context for a query with pagination"""
         query_embedding = self._create_embedding(query)
         nearest_node = self._find_nearest_node(query_embedding)
         
         if not nearest_node:
-            return {"nodes": [], "summary": "No relevant context found"}
+            return {"nodes": [], "summary": "No relevant context found", "pagination": {"page": page, "total": 0}}
         
         context_nodes = self._traverse_graph(nearest_node, max_depth)
-        summary = self._summarize_tree_branch(context_nodes, query)
+        
+        # Apply pagination
+        total_nodes = len(context_nodes)
+        start_idx = (page - 1) * page_size
+        end_idx = start_idx + page_size
+        paginated_nodes = context_nodes[start_idx:end_idx]
+        
+        summary = self._summarize_tree_branch(paginated_nodes, query)
         
         return {
-            "nodes": [self.conversation_tree.nodes[n] for n in context_nodes],
+            "nodes": [self.conversation_tree.nodes[n] for n in paginated_nodes],
             "summary": summary,
-            "root_node": nearest_node
+            "root_node": nearest_node,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total_nodes,
+                "total_pages": (total_nodes + page_size - 1) // page_size,
+                "has_next": end_idx < total_nodes,
+                "has_prev": page > 1
+            }
         }
+    
+    def get_memory_stats(self) -> Dict[str, Any]:
+        """Get comprehensive memory statistics"""
+        total_nodes = len(self.memory['memory_nodes'])
+        node_types = {}
+        total_size = 0
+        
+        for node in self.memory['memory_nodes']:
+            node_type = node.get('type', 'unknown')
+            node_types[node_type] = node_types.get(node_type, 0) + 1
+            total_size += len(str(node.get('content', '')))
+        
+        return {
+            "total_nodes": total_nodes,
+            "node_types": node_types,
+            "total_size_bytes": total_size,
+            "max_nodes": self.max_memory_nodes,
+            "max_node_size": self.max_node_size,
+            "compression_enabled": self.compression_enabled,
+            "faiss_available": self.faiss_index is not None,
+            "graph_nodes": self.conversation_tree.number_of_nodes(),
+            "graph_edges": self.conversation_tree.number_of_edges(),
+            "reflection_nodes": self.reflection_graph.number_of_nodes(),
+            "memory_usage_percent": (total_nodes / self.max_memory_nodes) * 100 if self.max_memory_nodes > 0 else 0
+        }
+    
+    def search_memory(self, query: str, node_type: str = None, limit: int = 20, 
+                     date_from: str = None, date_to: str = None) -> List[Dict]:
+        """Search memory with advanced filtering"""
+        query_embedding = self._create_embedding(query)
+        results = []
+        
+        for node in self.memory['memory_nodes']:
+            # Apply filters
+            if node_type and node.get('type') != node_type:
+                continue
+            
+            # Date filtering - check both timestamp and metadata date
+            # A node passes if ANY of its dates fall within the range
+            date_passed = True
+            
+            if date_from or date_to:
+                date_passed = False
+                dates_to_check = []
+                
+                # Check node timestamp
+                if node.get('timestamp'):
+                    try:
+                        dates_to_check.append(datetime.fromisoformat(node.get('timestamp')))
+                    except:
+                        pass
+                
+                # Check metadata date
+                if 'metadata' in node and 'date' in node['metadata']:
+                    try:
+                        dates_to_check.append(datetime.fromisoformat(node['metadata']['date']))
+                    except:
+                        pass
+                
+                # If no valid dates found, skip date filtering
+                if not dates_to_check:
+                    date_passed = True
+                else:
+                    # Check if any date falls within the range
+                    for node_date in dates_to_check:
+                        date_in_range = True
+                        
+                        if date_from:
+                            try:
+                                from_date = datetime.fromisoformat(date_from)
+                                if node_date < from_date:
+                                    date_in_range = False
+                            except:
+                                pass
+                        
+                        if date_to:
+                            try:
+                                to_date = datetime.fromisoformat(date_to)
+                                if node_date > to_date:
+                                    date_in_range = False
+                            except:
+                                pass
+                        
+                        if date_in_range:
+                            date_passed = True
+                            break
+            
+            if not date_passed:
+                continue
+            
+            # Calculate similarity
+            try:
+                similarity = self._cosine_similarity(query_embedding, node.get('embedding', []))
+                results.append({
+                    'node': node,
+                    'similarity': similarity
+                })
+            except:
+                continue
+        
+        # Sort by similarity and limit
+        results.sort(key=lambda x: x['similarity'], reverse=True)
+        return results[:limit]
     
     def prune_old_branches(self, days_old: int = 30, similarity_threshold: float = 0.3):
         """Prune old, low-similarity branches"""
@@ -677,14 +1120,102 @@ class ProjectBrain:
         return f"Remembered: {decision}"
     
     def _save(self):
-        """Save brain to disk"""
+        """Save brain to disk with custom encoder and compression"""
         self.memory['project_meta']['last_updated'] = datetime.now().isoformat()
+        
         # Patch: ensure all memory_nodes have type as string
         for node in self.memory.get('memory_nodes', []):
             if isinstance(node.get('type'), NodeType):
                 node['type'] = node['type'].value
+        
+        # Compress memory if enabled
+        if self.compression_enabled:
+            self._compress_memory()
+        
         with open(self.brain_file, 'w') as f:
-            json.dump(self.memory, f, indent=2)
+            json.dump(self.memory, f, indent=2, cls=lambda **kwargs: SecureEncoder(self.security_config, **kwargs))
+    
+    def _compress_memory(self):
+        """Compress memory data to reduce size"""
+        try:
+            import gzip
+            import base64
+            
+            # Compress large content fields
+            for node in self.memory.get('memory_nodes', []):
+                if 'content' in node and len(node['content']) > 1000:
+                    compressed = gzip.compress(node['content'].encode('utf-8'))
+                    node['content'] = f"COMPRESSED:{base64.b64encode(compressed).decode()}"
+                    node['compressed'] = True
+        except Exception as e:
+            print(f"Memory compression failed: {e}")
+    
+    def _decompress_memory(self):
+        """Decompress memory data when loading"""
+        try:
+            import gzip
+            import base64
+            
+            for node in self.memory.get('memory_nodes', []):
+                if node.get('compressed') and node['content'].startswith('COMPRESSED:'):
+                    compressed_data = node['content'][11:]  # Remove 'COMPRESSED:' prefix
+                    decompressed = gzip.decompress(base64.b64decode(compressed_data))
+                    node['content'] = decompressed.decode('utf-8')
+                    node['compressed'] = False
+        except Exception as e:
+            print(f"Memory decompression failed: {e}")
+    
+    def export_memory(self, format: str = 'json', include_encrypted: bool = False) -> str:
+        """Export memory data in various formats"""
+        if format == 'json':
+            export_data = self.memory.copy()
+            if not include_encrypted:
+                # Remove encrypted fields
+                export_data = self._remove_encrypted_fields(export_data)
+            
+            export_file = f"{self.project_path}/.ai/memory_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            with open(export_file, 'w') as f:
+                json.dump(export_data, f, indent=2, cls=lambda **kwargs: SecureEncoder(self.security_config, **kwargs))
+            return export_file
+        
+        elif format == 'csv':
+            import csv
+            export_file = f"{self.project_path}/.ai/memory_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            
+            with open(export_file, 'w', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(['id', 'type', 'content', 'timestamp', 'parent_id'])
+                
+                for node in self.memory.get('memory_nodes', []):
+                    content = node.get('content', '')[:100]  # Truncate for CSV
+                    writer.writerow([
+                        node.get('id', ''),
+                        node.get('type', ''),
+                        content,
+                        node.get('timestamp', ''),
+                        node.get('parent_id', '')
+                    ])
+            return export_file
+        
+        else:
+            raise ValueError(f"Unsupported export format: {format}")
+    
+    def _remove_encrypted_fields(self, data: Dict) -> Dict:
+        """Remove encrypted fields from export data"""
+        sanitized = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                sanitized[key] = self._remove_encrypted_fields(value)
+            elif isinstance(value, list):
+                sanitized[key] = [
+                    self._remove_encrypted_fields(item) if isinstance(item, dict) else item 
+                    for item in value
+                ]
+            elif isinstance(value, str) and self.security_config.is_sensitive_field(key):
+                sanitized[key] = "[ENCRYPTED]"
+            else:
+                sanitized[key] = value
+        return sanitized
 
 # ==================== ENHANCED LANGGRAPH CHECKPOINT ====================
 

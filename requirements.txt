@@ -88,8 +88,14 @@ pytest-timeout>=2.1.0  # For test timeouts
 pytest-mock>=3.11.0  # For enhanced mocking
 mypy>=1.7.0  # For type checking
 
-# Optional: Enhanced research capabilities
-# duckduckgo-search>=4.0.0  # Uncomment for enhanced web search
-# beautifulsoup4>=4.12.0    # Uncomment for web scraping
-# selenium>=4.15.0          # Uncomment for browser automation
-# playwright>=1.40.0        # Uncomment for modern browser automation 
+# Enhanced research capabilities
+arxiv>=1.4.8              # For academic paper search
+feedparser>=6.0.10        # For RSS feed parsing
+beautifulsoup4>=4.12.0    # For web scraping
+duckduckgo-search>=4.0.0  # Enhanced web search
+selenium>=4.15.0          # Browser automation
+playwright>=1.40.0        # Modern browser automation
+
+# Optional: Additional search APIs (uncomment as needed)
+# google-api-python-client>=2.0.0  # Google Custom Search API
+# azure-cognitiveservices-search>=7.0.0  # Bing Search API 

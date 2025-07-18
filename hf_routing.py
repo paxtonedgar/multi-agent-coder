@@ -9,6 +9,8 @@ import json
 import time
 import torch
 import asyncio
+import psutil
+import gc
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
 from dataclasses import dataclass, asdict
@@ -57,6 +59,7 @@ class ReasoningModelDiscovery:
         self.brain = brain
         self.research_tools = RealResearchTools(brain)
         self.embedding_model = None
+        self.error_handler = HFErrorHandler(brain)
         self._init_embedding_model()
         
     def _init_embedding_model(self):
@@ -124,6 +127,10 @@ class ReasoningModelDiscovery:
             
             for query in search_queries:
                 try:
+                    # Check if we should retry based on error handling
+                    if not self.error_handler.handle_model_discovery_error(Exception("Web search"), "web_search"):
+                        continue
+                    
                     # Use web search from tools
                     search_result = self.research_tools.web_search_integration(query)
                     
@@ -131,12 +138,17 @@ class ReasoningModelDiscovery:
                     extracted_models = self._extract_models_from_text(search_result)
                     models.extend(extracted_models)
                     
+                    # Reset error count on success
+                    self.error_handler.reset_error_count("discovery_web_search")
+                    
                 except Exception as e:
                     print(f"Warning: Web search failed for '{query}': {e}")
+                    self.error_handler.handle_model_discovery_error(e, "web_search")
                     continue
                     
         except Exception as e:
             print(f"Warning: Web search discovery failed: {e}")
+            self.error_handler.handle_model_discovery_error(e, "web_search")
         
         return models
     
@@ -145,6 +157,10 @@ class ReasoningModelDiscovery:
         models = []
         
         try:
+            # Check if we should retry based on error handling
+            if not self.error_handler.handle_model_discovery_error(Exception("HF dataset"), "hf_dataset"):
+                return models
+            
             # Try to load Open LLM Leaderboard dataset
             dataset = load_dataset("HuggingFaceH4/open_llm_leaderboard", split="train")
             
@@ -170,9 +186,13 @@ class ReasoningModelDiscovery:
                         
                 except Exception as e:
                     continue
+            
+            # Reset error count on success
+            self.error_handler.reset_error_count("discovery_hf_dataset")
                     
         except Exception as e:
             print(f"Warning: HF dataset query failed: {e}")
+            self.error_handler.handle_model_discovery_error(e, "hf_dataset")
         
         return models
     
@@ -535,6 +555,8 @@ class HFModelLoader:
     def __init__(self):
         self.loaded_models = {}
         self.device = self._get_optimal_device()
+        self.resource_monitor = ResourceMonitor()
+        self.error_handler = None  # Will be set by HFRoutingSystem
     
     def _get_optimal_device(self) -> str:
         """Get optimal device for model loading"""
@@ -552,8 +574,19 @@ class HFModelLoader:
         if model_name in self.loaded_models:
             return self.loaded_models[model_name]
         
+        # Check resource availability
+        resource_status = self.resource_monitor.check_memory_available()
+        if not resource_status['can_load_model']:
+            error_msg = f"Insufficient resources to load {model_name}. CPU: {resource_status['cpu_memory_percent']:.1f}%, GPU: {resource_status['gpu_memory_percent']:.1f}%"
+            print(f"❌ {error_msg}")
+            
+            if self.error_handler:
+                self.error_handler.handle_model_loading_error(model_name, Exception(error_msg))
+            return None
+        
         try:
             print(f"🔄 Loading {model_name} ({model_id})...")
+            print(f"📊 Resources: CPU {resource_status['cpu_memory_percent']:.1f}%, GPU {resource_status['gpu_memory_percent']:.1f}%")
             
             # Load tokenizer
             tokenizer = AutoTokenizer.from_pretrained(model_id)
@@ -596,6 +629,8 @@ class HFModelLoader:
             
         except Exception as e:
             print(f"❌ Failed to load {model_name}: {e}")
+            if self.error_handler:
+                self.error_handler.handle_model_loading_error(model_name, e)
             return None
     
     def generate_text(self, model_name: str, prompt: str) -> str:
@@ -630,6 +665,140 @@ class HFModelLoader:
             torch.cuda.empty_cache() if torch.cuda.is_available() else None
             print(f"🗑️ Unloaded {model_name}")
 
+# ==================== RESOURCE MONITORING ====================
+
+class ResourceMonitor:
+    """Monitor system resources for model loading"""
+    
+    def __init__(self):
+        self.memory_threshold = 0.9  # 90% memory usage threshold
+        self.gpu_memory_threshold = 0.95  # 95% GPU memory threshold
+    
+    def check_memory_available(self) -> Dict[str, Any]:
+        """Check if enough memory is available for model loading"""
+        try:
+            memory = psutil.virtual_memory()
+            gpu_memory = self._get_gpu_memory()
+            
+            return {
+                'cpu_memory_available': memory.available / (1024**3),  # GB
+                'cpu_memory_percent': memory.percent,
+                'gpu_memory_available': gpu_memory.get('available', 0),
+                'gpu_memory_percent': gpu_memory.get('percent', 0),
+                'can_load_model': (
+                    memory.percent < (self.memory_threshold * 100) and
+                    gpu_memory.get('percent', 0) < (self.gpu_memory_threshold * 100)
+                )
+            }
+        except Exception as e:
+            print(f"Warning: Resource monitoring failed: {e}")
+            return {
+                'cpu_memory_available': 0,
+                'cpu_memory_percent': 100,
+                'gpu_memory_available': 0,
+                'gpu_memory_percent': 100,
+                'can_load_model': False
+            }
+    
+    def _get_gpu_memory(self) -> Dict[str, float]:
+        """Get GPU memory information"""
+        try:
+            if torch.cuda.is_available():
+                gpu_memory = torch.cuda.get_device_properties(0).total_memory / (1024**3)
+                gpu_allocated = torch.cuda.memory_allocated(0) / (1024**3)
+                gpu_available = gpu_memory - gpu_allocated
+                gpu_percent = (gpu_allocated / gpu_memory) * 100
+                
+                return {
+                    'total': gpu_memory,
+                    'allocated': gpu_allocated,
+                    'available': gpu_available,
+                    'percent': gpu_percent
+                }
+        except Exception:
+            pass
+        
+        return {'total': 0, 'allocated': 0, 'available': 0, 'percent': 0}
+    
+    def cleanup_resources(self):
+        """Clean up resources to free memory"""
+        try:
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception as e:
+            print(f"Warning: Resource cleanup failed: {e}")
+
+# ==================== ENHANCED ERROR HANDLING ====================
+
+class HFErrorHandler:
+    """Handle HF routing errors gracefully"""
+    
+    def __init__(self, brain: ProjectBrain):
+        self.brain = brain
+        self.error_counts = {}
+        self.last_error_time = {}
+    
+    def handle_model_discovery_error(self, error: Exception, source: str) -> bool:
+        """Handle model discovery errors with exponential backoff"""
+        error_key = f"discovery_{source}"
+        current_time = time.time()
+        
+        # Check if we should retry based on backoff
+        if error_key in self.last_error_time:
+            time_since_last = current_time - self.last_error_time[error_key]
+            backoff_time = min(300, 2 ** self.error_counts.get(error_key, 0))  # Max 5 minutes
+            
+            if time_since_last < backoff_time:
+                return False
+        
+        # Update error tracking
+        self.error_counts[error_key] = self.error_counts.get(error_key, 0) + 1
+        self.last_error_time[error_key] = current_time
+        
+        # Log error to brain
+        self.brain.add_node(
+            NodeType.DECISION,
+            f"Model discovery error in {source}: {str(error)}",
+            metadata={
+                'error_type': 'model_discovery',
+                'source': source,
+                'error_count': self.error_counts[error_key],
+                'timestamp': datetime.now().isoformat()
+            }
+        )
+        
+        return True
+    
+    def handle_model_loading_error(self, model_name: str, error: Exception) -> Dict[str, Any]:
+        """Handle model loading errors"""
+        error_key = f"loading_{model_name}"
+        
+        # Log error
+        self.brain.add_node(
+            NodeType.DECISION,
+            f"Model loading error for {model_name}: {str(error)}",
+            metadata={
+                'error_type': 'model_loading',
+                'model_name': model_name,
+                'timestamp': datetime.now().isoformat()
+            }
+        )
+        
+        return {
+            'success': False,
+            'error': str(error),
+            'model_name': model_name,
+            'should_retry': False  # Don't retry loading failures immediately
+        }
+    
+    def reset_error_count(self, error_key: str):
+        """Reset error count for successful operations"""
+        if error_key in self.error_counts:
+            del self.error_counts[error_key]
+        if error_key in self.last_error_time:
+            del self.last_error_time[error_key]
+
 # ==================== MAIN ROUTING INTERFACE ====================
 
 class HFRoutingSystem:
@@ -639,6 +808,8 @@ class HFRoutingSystem:
         self.brain = brain
         self.router = DynamicModelRouter(brain)
         self.loader = HFModelLoader()
+        self.error_handler = HFErrorHandler(brain)
+        self.loader.error_handler = self.error_handler  # Connect error handler
         self.run_count = 0
     
     def route_task(self, task: str, original_output: str = "", force_hf: bool = False) -> Tuple[str, str]:
@@ -723,15 +894,60 @@ Response:"""
         return True
     
     def _check_for_refusals(self, response: str) -> bool:
-        """Check if response contains refusals"""
-        refusal_indicators = [
-            'ethical', 'cannot', 'should not', 'would not', 'refuse', 'decline',
-            'not appropriate', 'not suitable', 'against policy', 'guidelines',
-            'safety', 'harmful', 'dangerous', 'illegal', 'unethical'
-        ]
+        """Check if response contains refusals using multiple heuristics"""
+        if not response or len(response.strip()) < 10:
+            return True  # Empty or very short responses are suspicious
         
         response_lower = response.lower()
-        return any(indicator in response_lower for indicator in refusal_indicators)
+        
+        # Heuristic 1: Direct refusal indicators
+        direct_refusal_indicators = [
+            'ethical', 'cannot', 'should not', 'would not', 'refuse', 'decline',
+            'not appropriate', 'not suitable', 'against policy', 'guidelines',
+            'safety', 'harmful', 'dangerous', 'illegal', 'unethical',
+            'i cannot', 'i cannot help', 'i cannot assist', 'i cannot provide',
+            'i am not able', 'i am unable', 'i cannot answer', 'i cannot respond'
+        ]
+        
+        if any(indicator in response_lower for indicator in direct_refusal_indicators):
+            return True
+        
+        # Heuristic 2: Apologetic non-answers
+        apologetic_patterns = [
+            'i apologize', 'i am sorry', 'unfortunately', 'regrettably',
+            'i cannot help with that', 'i cannot assist with that',
+            'i am not able to help', 'i am unable to assist'
+        ]
+        
+        if any(pattern in response_lower for pattern in apologetic_patterns):
+            return True
+        
+        # Heuristic 3: Policy/guideline references
+        policy_indicators = [
+            'policy', 'guidelines', 'terms of service', 'community guidelines',
+            'content policy', 'usage policy', 'ethical guidelines'
+        ]
+        
+        if any(indicator in response_lower for indicator in policy_indicators):
+            return True
+        
+        # Heuristic 4: Deflection patterns
+        deflection_patterns = [
+            'i suggest', 'i recommend', 'you might want to', 'consider',
+            'perhaps you could', 'maybe you should', 'i would suggest'
+        ]
+        
+        # Count deflection patterns - too many suggest refusal
+        deflection_count = sum(1 for pattern in deflection_patterns if pattern in response_lower)
+        if deflection_count >= 2:
+            return True
+        
+        # Heuristic 5: Response length analysis
+        # Very short responses to complex questions might indicate refusal
+        if len(response.split()) < 20 and any(word in response_lower for word in ['complex', 'difficult', 'challenging']):
+            return True
+        
+        return False
     
     def refresh_models(self):
         """Refresh the model discovery cache"""
@@ -740,15 +956,23 @@ Response:"""
         print("✅ Model discovery refreshed")
     
     def get_routing_stats(self) -> Dict[str, Any]:
-        """Get routing statistics"""
+        """Get comprehensive routing statistics with performance metrics"""
         routing_logs = self.brain.memory.get('routing_logs', [])
         
         if not routing_logs:
-            return {'total_routes': 0, 'success_rate': 0, 'models_used': []}
+            return {
+                'total_routes': 0,
+                'success_rate': 0.0,
+                'refusal_rate': 0.0,
+                'models_used': [],
+                'performance_metrics': {},
+                'error_rates': {},
+                'resource_usage': {}
+            }
         
         total_routes = len(routing_logs)
         successful_routes = sum(1 for log in routing_logs if log.get('success', False))
-        success_rate = successful_routes / total_routes if total_routes > 0 else 0
+        refusal_routes = sum(1 for log in routing_logs if log.get('refusal_detected', False))
         
         # Count models used
         model_counts = {}
@@ -756,9 +980,43 @@ Response:"""
             model = log.get('model_used', 'unknown')
             model_counts[model] = model_counts.get(model, 0) + 1
         
+        # Performance metrics by model
+        performance_metrics = {}
+        for model in model_counts.keys():
+            model_logs = [log for log in routing_logs if log.get('model_used') == model]
+            if model_logs:
+                model_success_rate = sum(1 for log in model_logs if log.get('success', False)) / len(model_logs)
+                model_refusal_rate = sum(1 for log in model_logs if log.get('refusal_detected', False)) / len(model_logs)
+                performance_metrics[model] = {
+                    'success_rate': model_success_rate,
+                    'refusal_rate': model_refusal_rate,
+                    'usage_count': len(model_logs)
+                }
+        
+        # Error rates by source
+        error_rates = {}
+        discovery_errors = self.error_handler.error_counts
+        for error_key, count in discovery_errors.items():
+            error_rates[error_key] = count
+        
+        # Resource usage (if available)
+        resource_usage = {}
+        try:
+            resource_status = self.loader.resource_monitor.check_memory_available()
+            resource_usage = {
+                'cpu_memory_percent': resource_status['cpu_memory_percent'],
+                'gpu_memory_percent': resource_status['gpu_memory_percent'],
+                'can_load_model': resource_status['can_load_model']
+            }
+        except Exception:
+            resource_usage = {'error': 'Resource monitoring unavailable'}
+        
         return {
             'total_routes': total_routes,
-            'success_rate': success_rate,
+            'success_rate': successful_routes / total_routes if total_routes > 0 else 0.0,
+            'refusal_rate': refusal_routes / total_routes if total_routes > 0 else 0.0,
             'models_used': model_counts,
-            'refusal_rate': sum(1 for log in routing_logs if log.get('refusal_detected', False)) / total_routes
+            'performance_metrics': performance_metrics,
+            'error_rates': error_rates,
+            'resource_usage': resource_usage
         } 

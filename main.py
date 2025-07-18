@@ -44,9 +44,9 @@ Examples:
     
     parser.add_argument(
         "--mode",
-        choices=["full", "quick", "research"],
+        choices=["full", "quick", "research_only", "minimal"],
         default="full",
-        help="Workflow mode: full (default), quick, or research-only"
+        help="Workflow mode: full (default), quick, research_only, or minimal"
     )
     
     parser.add_argument(
@@ -117,8 +117,31 @@ Examples:
             repo_url=args.repo_url or ""
         )
         
-        print("\n✅ Workflow completed successfully!")
-        print(f"📝 Final result: {result.get('final_result', 'No result available')}")
+        if result.get('success'):
+            print("\n✅ Workflow completed successfully!")
+            
+            # Handle output truncation for research mode
+            if args.mode == "research_only":
+                research_results = result.get('research_results', [])
+                if research_results:
+                    print("\n📊 Research Results:")
+                    for i, research in enumerate(research_results[:3], 1):  # Show first 3
+                        content = research.get('content', '')
+                        if len(content) > 1000:
+                            content = content[:1000] + '\n[Truncated - Full results in logs]'
+                        print(f"\n{i}. {research.get('source', 'Unknown')}:")
+                        print(content)
+                else:
+                    print("📝 No research results available")
+            else:
+                # For other modes, show final result
+                final_result = result.get('final_result', 'No result available')
+                if len(final_result) > 1000:
+                    final_result = final_result[:1000] + '\n[Truncated - Full result in logs]'
+                print(f"📝 Final result: {final_result}")
+        else:
+            print(f"\n❌ Workflow failed: {result.get('error', 'Unknown error')}")
+            sys.exit(1)
         
     except Exception as e:
         print(f"❌ Workflow failed: {e}")

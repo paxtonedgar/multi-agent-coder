@@ -70,10 +70,14 @@ def run_performance_tests() -> Dict[str, Any]:
     performance_results['cli_startup_success'] = result.returncode == 0
     
     # Test memory usage
-    import psutil
-    import os
-    process = psutil.Process(os.getpid())
-    performance_results['memory_usage_mb'] = process.memory_info().rss / 1024 / 1024
+    try:
+        import psutil
+        import os
+        process = psutil.Process(os.getpid())
+        performance_results['memory_usage_mb'] = process.memory_info().rss / 1024 / 1024
+    except ImportError:
+        performance_results['memory_usage_mb'] = 0
+        performance_results['psutil_missing'] = True
     
     return performance_results
 
@@ -103,9 +107,33 @@ def run_quality_analysis() -> Dict[str, Any]:
     
     return quality_results
 
+def run_benchmark_tests() -> Dict[str, Any]:
+    """Run benchmark tests"""
+    print("🏆 Running benchmark tests...")
+    
+    try:
+        # Import and run benchmark tests
+        from tests.integration.test_benchmarks import BenchmarkTestHarness
+        
+        harness = BenchmarkTestHarness(max_problems_per_benchmark=1)  # Quick test
+        results = harness.run_benchmarks()
+        
+        return {
+            'success': True,
+            'results': results,
+            'summary': results.get('summary', {}),
+            'benchmark_metrics': results.get('benchmark_metrics', {})
+        }
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
 def generate_test_report(test_results: Dict[str, Any], 
                         performance_results: Dict[str, Any],
-                        quality_results: Dict[str, Any]) -> Dict[str, Any]:
+                        quality_results: Dict[str, Any],
+                        benchmark_results: Dict[str, Any] = None) -> Dict[str, Any]:
     """Generate comprehensive test report"""
     
     # Parse test output for statistics
@@ -156,11 +184,13 @@ def generate_test_report(test_results: Dict[str, Any],
         'test_statistics': test_stats,
         'performance_results': performance_results,
         'quality_results': quality_results,
+        'benchmark_results': benchmark_results,
         'summary': {
             'overall_success': test_results.get('success', False),
             'test_success_rate': test_stats['success_rate'],
             'performance_acceptable': performance_results.get('cli_startup_time', 0) < 2.0,
-            'quality_acceptable': quality_results.get('ruff_success', False) and quality_results.get('mypy_success', False)
+            'quality_acceptable': quality_results.get('ruff_success', False) and quality_results.get('mypy_success', False),
+            'benchmark_success': benchmark_results.get('success', False) if benchmark_results else False
         }
     }
     
@@ -197,6 +227,18 @@ def print_summary(report: Dict[str, Any]):
     print(f"\n⚡ Performance:")
     print(f"   CLI Startup: {perf.get('cli_startup_time', 0):.3f}s")
     print(f"   Memory Usage: {perf.get('memory_usage_mb', 0):.1f}MB")
+    
+    # Print benchmark results if available
+    if report.get('benchmark_results'):
+        bench = report['benchmark_results']
+        if bench.get('success'):
+            summary = bench.get('summary', {})
+            print(f"\n🏆 Benchmark Results:")
+            print(f"   Success Rate: {summary.get('overall_success_rate', 0):.2%}")
+            print(f"   Avg Quality: {summary.get('avg_quality_score', 0):.2f}")
+            print(f"   Avg Performance: {summary.get('avg_performance_score', 0):.2f}")
+        else:
+            print(f"\n🏆 Benchmark Results: Failed - {bench.get('error', 'Unknown error')}")
     
     qual = report['quality_results']
     print(f"\n🔍 Quality:")
@@ -242,8 +284,11 @@ def main():
     if not args.skip_quality:
         quality_results = run_quality_analysis()
     
+    # Run benchmark tests
+    benchmark_results = run_benchmark_tests()
+    
     # Generate report
-    report = generate_test_report(test_results, performance_results, quality_results)
+    report = generate_test_report(test_results, performance_results, quality_results, benchmark_results)
     
     # Save report
     save_report(report, args.output)

@@ -3,16 +3,122 @@ LangGraph workflow with research, planning, coding, review, deploy nodes
 Enhanced with DSPy optimization and code auditor
 """
 
+import os
 import json
+import asyncio
 from typing import Dict, List, Any, Annotated
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langgraph.checkpoint.memory import MemorySaver
 
-from memory import AgentState, ProjectBrain, BrainCheckpoint
+from memory import AgentState, ProjectBrain, BrainCheckpoint, NodeType
 from agents import create_all_agents
 from prompts import PromptFactory, PromptTemplates
 from datetime import datetime
+
+# ==================== ASYNC UTILITIES ====================
+
+class AsyncManager:
+    """Manages async operations consistently across workflow nodes"""
+    
+    def __init__(self):
+        self._loop = None
+        self._cleanup_required = False
+    
+    def get_or_create_loop(self):
+        """Get existing loop or create new one safely"""
+        try:
+            # Try to get current loop
+            loop = asyncio.get_running_loop()
+            return loop, False  # Existing loop, no cleanup needed
+        except RuntimeError:
+            # No running loop, create new one
+            if self._loop is None or self._loop.is_closed():
+                self._loop = asyncio.new_event_loop()
+                self._cleanup_required = True
+            return self._loop, True  # New loop, cleanup needed
+    
+    def run_async(self, coro):
+        """Run coroutine with proper loop management"""
+        loop, needs_cleanup = self.get_or_create_loop()
+        
+        try:
+            if needs_cleanup:
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(coro)
+            else:
+                # If we're already in an async context, we need to handle this differently
+                # For now, we'll create a task and wait for it
+                task = asyncio.create_task(coro)
+                result = asyncio.get_event_loop().run_until_complete(task)
+            
+            return result
+        except Exception as e:
+            print(f"Async operation failed: {e}")
+            raise
+        finally:
+            if needs_cleanup and self._cleanup_required:
+                try:
+                    loop.close()
+                    self._cleanup_required = False
+                except Exception as e:
+                    print(f"Warning: Loop cleanup failed: {e}")
+    
+    def cleanup(self):
+        """Clean up async resources"""
+        if self._cleanup_required and self._loop and not self._loop.is_closed():
+            try:
+                self._loop.close()
+                self._cleanup_required = False
+            except Exception as e:
+                print(f"Warning: Async cleanup failed: {e}")
+
+# Global async manager
+async_manager = AsyncManager()
+
+# ==================== ASYNC ERROR HANDLING ====================
+
+class AsyncErrorHandler:
+    """Handles async operation errors consistently"""
+    
+    @staticmethod
+    def handle_async_error(operation_name: str, error: Exception, fallback_value: Any = None) -> Dict[str, Any]:
+        """Handle async operation errors with consistent logging"""
+        error_info = {
+            'operation': operation_name,
+            'error_type': type(error).__name__,
+            'error_message': str(error),
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        print(f"❌ Async {operation_name} failed: {error}")
+        
+        # Log to brain if available
+        try:
+            # This would need brain context to be passed
+            pass
+        except Exception:
+            pass
+        
+        return {
+            'success': False,
+            'error': error_info,
+            'fallback_value': fallback_value
+        }
+    
+    @staticmethod
+    def create_fallback_result(operation_name: str, fallback_value: Any = None) -> Dict[str, Any]:
+        """Create a fallback result for failed async operations"""
+        return {
+            'success': False,
+            'error': {
+                'operation': operation_name,
+                'error_type': 'AsyncOperationFailed',
+                'error_message': f'{operation_name} operation failed',
+                'timestamp': datetime.now().isoformat()
+            },
+            'fallback_value': fallback_value
+        }
 
 # ==================== NODE FUNCTIONS ====================
 
@@ -636,10 +742,200 @@ def reflection_node(state: AgentState) -> AgentState:
             ("system", f"Reflection failed: {e}")
         ])
 
+# ==================== CONFIDENCE & RECRUITMENT ====================
+
+def compute_confidence(output: str, llm=None) -> float:
+    """Compute confidence score for agent output using bootstrap sampling"""
+    try:
+        # Simple confidence computation based on output characteristics
+        # In production, this would use LLM token probabilities or bootstrap sampling
+        
+        # Base confidence from output length and structure
+        base_confidence = min(len(output) / 500, 0.6)  # Cap at 0.6, more lenient
+        
+        # Boost confidence for structured outputs (JSON, code blocks)
+        if '{' in output and '}' in output:
+            base_confidence += 0.15
+        if '```' in output:
+            base_confidence += 0.15
+        if 'def ' in output or 'class ' in output:
+            base_confidence += 0.15
+        
+        # Boost confidence for comprehensive responses
+        if len(output.split()) > 50:
+            base_confidence += 0.1
+        
+        # Reduce confidence for error indicators
+        if any(word in output.lower() for word in ['error', 'failed', 'exception', 'timeout']):
+            base_confidence -= 0.2
+        
+        return max(0.1, min(1.0, base_confidence))
+        
+    except Exception as e:
+        print(f"Confidence computation failed: {e}")
+        return 0.5  # Default confidence
+
+def confidence_node(state: AgentState) -> AgentState:
+    """Compute confidence for current agent output and update state"""
+    
+    # Get the most recent agent output
+    messages = state.get('messages', [])
+    if not messages:
+        state['confidence'] = 0.5  # Default confidence
+        return state
+    
+    # Find the most recent AI message
+    recent_output = ""
+    for msg in reversed(messages):
+        if msg.get('role') == 'ai' or msg.get('role') == 'assistant':
+            recent_output = msg.get('content', '')
+            break
+    
+    if not recent_output:
+        state['confidence'] = 0.5  # Default confidence
+        return state
+    
+    # Compute confidence
+    confidence = compute_confidence(recent_output)
+    
+    # Update state with confidence
+    state['confidence'] = confidence
+    
+    return state
+
+def supervisor_node(state: AgentState) -> AgentState:
+    """Supervisor node for dynamic recruitment based on confidence"""
+    
+    confidence = state.get('confidence', 0.5)
+    current_step = state.get('current_step', 'unknown')
+    task = state.get('task', '')
+    
+    # Determine if recruitment is needed
+    needs_recruitment = confidence < 0.8
+    
+    if needs_recruitment:
+        # Add recruitment context to state
+        state['recruitment_needed'] = True
+        state['recruitment_reason'] = f"Low confidence ({confidence:.2f}) in {current_step}"
+        
+        # Log recruitment decision
+        brain = state.get('brain_context', {}).get('brain')
+        if brain:
+            brain.add_node(
+                NodeType.DECISION,
+                f"Recruitment triggered: confidence {confidence:.2f} < 0.8 threshold",
+                metadata={
+                    'step': current_step,
+                    'confidence': confidence,
+                    'task': task
+                }
+            )
+    else:
+        state['recruitment_needed'] = False
+    
+    return state
+
+# ==================== REASONING & COLLABORATION ====================
+
+def tree_of_thoughts_node(state: AgentState) -> AgentState:
+    """Tree of Thoughts reasoning node for complex tasks"""
+    
+    task = state.get('task', '')
+    brain = state.get('brain_context', {}).get('brain')
+    
+    if not brain:
+        state['reasoning_results'] = {'error': 'No brain context'}
+        return state
+    
+    try:
+        # Create reasoning agent
+        from agents import ReasoningAgent
+        reasoning_agent = ReasoningAgent(brain)
+        
+        # Run Tree of Thoughts reasoning using standardized async manager
+        reasoning_result = async_manager.run_async(
+            reasoning_agent.reason_with_validation(task)
+        )
+        
+        # Update state with reasoning results
+        state['reasoning_results'] = reasoning_result
+        state['reasoning_paths'] = reasoning_result.get('paths', [])
+        state['best_path'] = reasoning_result.get('best_path', '')
+        
+        # Log reasoning to brain
+        brain.add_node(
+            NodeType.REFLECTION,
+            f"Tree of Thoughts reasoning completed for: {task}",
+            metadata={
+                'reasoning_type': 'tree_of_thoughts',
+                'paths_explored': len(reasoning_result.get('paths', [])),
+                'best_path_score': reasoning_result.get('best_path_score', 0)
+            }
+        )
+        
+    except Exception as e:
+        print(f"Tree of Thoughts failed: {e}")
+        error_result = AsyncErrorHandler.handle_async_error(
+            'tree_of_thoughts_reasoning', 
+            e, 
+            {'error': str(e)}
+        )
+        state['reasoning_results'] = error_result['fallback_value']
+    
+    return state
+
+def debate_node(state: AgentState) -> AgentState:
+    """Multi-agent debate node for collaborative problem solving"""
+    
+    task = state.get('task', '')
+    brain = state.get('brain_context', {}).get('brain')
+    
+    if not brain:
+        state['debate_results'] = {'error': 'No brain context'}
+        return state
+    
+    try:
+        # Import debate framework
+        from debate_framework import MultiAgentDebateFramework
+        
+        # Create debate framework
+        debate = MultiAgentDebateFramework(brain=brain)
+        
+        # Run debate using standardized async manager
+        debate_result = async_manager.run_async(
+            debate.conduct_debate(task, context="", task_type="general")
+        )
+        
+        # Update state with debate results
+        state['debate_results'] = debate_result
+        state['consensus'] = debate_result.final_proposal
+        state['debate_confidence'] = debate_result.confidence
+        
+        # Log debate to brain
+        brain.add_node(
+            NodeType.DECISION,
+            f"Multi-agent debate completed for: {task}",
+            metadata={
+                'debate_type': 'collaborative',
+                'consensus_confidence': debate_result.confidence
+            }
+        )
+        
+    except Exception as e:
+        print(f"Debate failed: {e}")
+        error_result = AsyncErrorHandler.handle_async_error(
+            'multi_agent_debate', 
+            e, 
+            {'error': str(e)}
+        )
+        state['debate_results'] = error_result['fallback_value']
+    
+    return state
+
 # ==================== GRAPH CONSTRUCTION ====================
 
 def create_workflow_graph(brain: ProjectBrain) -> StateGraph:
-    """Create the main workflow graph with reflection"""
+    """Create the main workflow graph with reflection, confidence, and recruitment"""
     
     # Create graph
     workflow = StateGraph(AgentState)
@@ -651,17 +947,22 @@ def create_workflow_graph(brain: ProjectBrain) -> StateGraph:
     workflow.add_node("coding", coding_node)
     workflow.add_node("review", review_node)
     workflow.add_node("deploy", deploy_node)
-    workflow.add_node("reflection", reflection_node)  # New: reflection node
+    workflow.add_node("reflection", reflection_node)
+    workflow.add_node("confidence", confidence_node)  # New: confidence computation
+    workflow.add_node("supervisor", supervisor_node)  # New: recruitment supervisor
+    workflow.add_node("reasoning", tree_of_thoughts_node)  # New: Tree of Thoughts
+    workflow.add_node("debate", debate_node)  # New: multi-agent debate
     
     # Define edges
     workflow.set_entry_point("research")
     workflow.add_edge("research", "planning")
-    workflow.add_edge("planning", "auditor")
+    workflow.add_edge("planning", "confidence")  # Compute confidence after planning
+    workflow.add_edge("confidence", "supervisor")  # Check if recruitment needed
     workflow.add_edge("auditor", "coding")
-    workflow.add_edge("coding", "review")
+    workflow.add_edge("coding", "confidence")  # Compute confidence after coding
     workflow.add_edge("review", "deploy")
-    workflow.add_edge("deploy", "reflection")  # New: reflection after deploy
-    workflow.add_edge("reflection", END)  # New: end after reflection
+    workflow.add_edge("deploy", "reflection")
+    workflow.add_edge("reflection", END)
     
     # Add conditional edges for review feedback
     def should_redo_coding(state: AgentState) -> str:
@@ -681,6 +982,30 @@ def create_workflow_graph(brain: ProjectBrain) -> StateGraph:
                 return "auditor"
         return "review"
     
+    # Add conditional edges for recruitment and reasoning
+    def should_recruit_agents(state: AgentState) -> str:
+        """Check if additional agents should be recruited based on confidence"""
+        recruitment_needed = state.get('recruitment_needed', False)
+        if recruitment_needed:
+            return "recruit"
+        return "continue"
+    
+    def should_use_reasoning(state: AgentState) -> str:
+        """Check if Tree of Thoughts reasoning should be used"""
+        task = state.get('task', '')
+        # Use reasoning for complex tasks (long descriptions, technical terms)
+        complexity_score = len(task.split()) * 0.1 + task.count('algorithm') * 0.5 + task.count('optimize') * 0.3
+        if complexity_score > 2.0:
+            return "reasoning"
+        return "continue"
+    
+    def should_debate(state: AgentState) -> str:
+        """Check if multi-agent debate should be used"""
+        confidence = state.get('confidence', 0.5)
+        if confidence < 0.6:  # Low confidence triggers debate
+            return "debate"
+        return "continue"
+    
     workflow.add_conditional_edges(
         "review",
         should_redo_coding,
@@ -696,6 +1021,35 @@ def create_workflow_graph(brain: ProjectBrain) -> StateGraph:
         {
             "auditor": "auditor",
             "review": "review"
+        }
+    )
+    
+    # Add recruitment conditional edges
+    workflow.add_conditional_edges(
+        "supervisor",
+        should_recruit_agents,
+        {
+            "recruit": "reasoning",  # Use reasoning for complex tasks
+            "continue": "auditor"    # Continue to next step
+        }
+    )
+    
+    # Add reasoning conditional edges
+    workflow.add_conditional_edges(
+        "reasoning",
+        should_debate,
+        {
+            "debate": "debate",
+            "continue": "auditor"
+        }
+    )
+    
+    # Add debate conditional edges
+    workflow.add_conditional_edges(
+        "debate",
+        lambda state: "auditor",  # Always go to auditor after debate
+        {
+            "auditor": "auditor"
         }
     )
     
@@ -735,16 +1089,39 @@ def create_research_only_graph(brain: ProjectBrain) -> StateGraph:
     
     return workflow
 
+def create_minimal_workflow_graph(brain: ProjectBrain) -> StateGraph:
+    """Create minimal workflow graph - bypasses heavy operations"""
+    workflow = StateGraph(AgentState)
+    
+    # Add nodes with timeouts
+    workflow.add_node("planner", planning_node)
+    workflow.add_node("coder", coding_node)
+    
+    # Set entry and exit
+    workflow.set_entry_point("planner")
+    workflow.set_finish_point("coder")
+    
+    # Direct path: planner -> coder (skip research, audit, review)
+    workflow.add_edge("planner", "coder")
+    
+    return workflow
+
 # ==================== GRAPH EXECUTION ====================
 
 def run_workflow(task: str, brain: ProjectBrain, mode: str = "full", repo_url: str = "") -> Dict[str, Any]:
-    """Run the workflow with the given task"""
+    """Run the workflow with the given task and timeouts"""
+    
+    # Check for minimal mode
+    if os.getenv('MINIMAL_MODE'):
+        mode = "minimal"
     
     # Create appropriate graph
     if mode == "quick":
         graph = create_quick_workflow_graph(brain)
     elif mode == "research_only":
         graph = create_research_only_graph(brain)
+    elif mode == "minimal":
+        graph = create_minimal_workflow_graph(brain)
     else:
         graph = create_workflow_graph(brain)
     
@@ -774,21 +1151,45 @@ def run_workflow(task: str, brain: ProjectBrain, mode: str = "full", repo_url: s
     if not initial_state["messages"]:
         initial_state["messages"] = [{"role": "system", "content": "Starting workflow"}]
     
-    # Run workflow
+    # Run workflow with timeout
     config = {"configurable": {"thread_id": f"task_{hash(task)}"}}
     
     try:
-        result = app.invoke(initial_state, config=config)
-        return {
-            "success": True,
-            "final_state": result,
-            "messages": result.get("messages", []),
-            "research_results": result.get("research_results", []),
-            "plan": result.get("plan", {}),
-            "code_files": result.get("code_files", []),
-            "review_feedback": result.get("review_feedback", []),
-            "deployment_status": result.get("deployment_status", {})
-        }
+        # Set timeout based on mode
+        timeout_seconds = {
+            "minimal": 30,
+            "quick": 60,
+            "research_only": 45,
+            "full": 120
+        }.get(mode, 120)
+        
+        # Run with timeout using standardized async manager
+        try:
+            result = async_manager.run_async(
+                asyncio.wait_for(
+                    asyncio.to_thread(app.invoke, initial_state, config=config),
+                    timeout=timeout_seconds
+                )
+            )
+            return {
+                "success": True,
+                "final_state": result,
+                "messages": result.get("messages", []),
+                "research_results": result.get("research_results", []),
+                "plan": result.get("plan", {}),
+                "code_files": result.get("code_files", []),
+                "review_feedback": result.get("review_feedback", []),
+                "deployment_status": result.get("deployment_status", {})
+            }
+        except asyncio.TimeoutError:
+            return {
+                "success": False,
+                "error": f"Workflow timed out after {timeout_seconds} seconds",
+                "final_state": None
+            }
+        finally:
+            async_manager.cleanup()
+            
     except Exception as e:
         return {
             "success": False,
