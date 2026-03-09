@@ -1,6 +1,6 @@
 # Multi-Agent Coder
 
-A multi-agent AI coding system built with LangGraph where specialized agents collaborate through structured debate to solve programming tasks.
+A multi-agent AI coding system built with LangGraph where specialized agents collaborate through structured debate to solve programming tasks. Includes a VS Code extension for real-time monitoring.
 
 ## Architecture
 
@@ -20,6 +20,7 @@ The system uses a graph-based workflow with five stages:
 - **Memory System** (`memory.py`) — Project-aware context with graph-based knowledge storage
 - **Search Service** (`search_service.py`) — Web search integration for research phase
 - **Monitoring API** (`main.py`) — FastAPI server exposing real-time workflow state
+- **VS Code Extension** (`vscode-extension/`) — Real-time dashboard with agent status, progress bars, and activity logs
 
 ## Tech Stack
 
@@ -27,7 +28,27 @@ The system uses a graph-based workflow with five stages:
 - **LLMs**: OpenAI, Anthropic, HuggingFace (configurable routing)
 - **Framework**: LangChain (tool-calling agents, prompt templates)
 - **API**: FastAPI + Uvicorn
+- **Monitoring UI**: VS Code extension (TypeScript) + Next.js dashboard
 - **Testing**: pytest
+
+## Project Structure
+
+```
+multi-agent-coder/
+├── agents.py                # LangGraph agents with tool-calling
+├── graph.py                 # StateGraph workflow (research → plan → code → review → deploy)
+├── debate_framework.py      # Multi-agent debate for code review
+├── creativity_engine.py     # Novel approach generation
+├── hf_routing.py            # HuggingFace model router
+├── memory.py                # Graph-based project memory
+├── search_service.py        # Web search integration
+├── main.py                  # FastAPI monitoring server + CLI entry point
+├── tests/                   # Test suite
+└── vscode-extension/        # VS Code monitoring extension
+    ├── src/extension.ts      # Extension entry point
+    ├── app/                  # Next.js dashboard UI
+    └── components/           # UI components
+```
 
 ## Quick Start
 
@@ -49,9 +70,15 @@ python main.py --task "Build a REST API for user management"
 python main.py --serve
 ```
 
-## Monitoring
+### VS Code Extension
 
-The system exposes a FastAPI endpoint for real-time workflow monitoring at `http://localhost:8000`, showing current phase, progress, and agent activity logs. Pairs with [cursor-multi-agent-coding-ui-extension](https://github.com/paxtonedgar/cursor-multi-agent-coding-ui-extension-) for a VS Code dashboard.
+```bash
+cd vscode-extension
+pnpm install
+# Press F5 in VS Code to launch extension dev host
+```
+
+Opens a real-time dashboard (`Ctrl+Shift+A` / `Cmd+Shift+A`) showing agent status, progress, and activity logs.
 
 ## Testing
 
@@ -59,3 +86,7 @@ The system exposes a FastAPI endpoint for real-time workflow monitoring at `http
 pytest
 pytest test_enhanced_search.py -v
 ```
+
+## License
+
+MIT

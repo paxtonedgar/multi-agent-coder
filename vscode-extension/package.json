@@ -1,0 +1,86 @@
+{
+  "name": "cursor-agent-monitor",
+  "displayName": "Multi-Agent Coder Monitor",
+  "description": "Pop-up UI for monitoring agent runs in Cursor",
+  "version": "0.1.0",
+  "publisher": "cursor-ai",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Visualization",
+    "Other"
+  ],
+  "keywords": [
+    "agent",
+    "monitor",
+    "cursor",
+    "ai",
+    "coding"
+  ],
+  "activationEvents": [
+    "onCommand:agentMonitor.start",
+    "workspaceContains:**/main.py"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentMonitor.start",
+        "title": "Start Agent Monitor",
+        "category": "Agent Monitor",
+        "icon": "$(eye)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "agentMonitor.start",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a"
+      }
+    ],
+    "configuration": {
+      "title": "Agent Monitor",
+      "properties": {
+        "agentMonitor.apiUrl": {
+          "type": "string",
+          "default": "http://localhost:8000/monitor",
+          "description": "API endpoint URL for agent monitoring data"
+        },
+        "agentMonitor.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start monitor when main.py is saved"
+        },
+        "agentMonitor.pollInterval": {
+          "type": "number",
+          "default": 5000,
+          "minimum": 1000,
+          "maximum": 30000,
+          "description": "Polling interval in milliseconds for agent status updates"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vsce": "^2.0.0"
+  },
+  "dependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  }
+}
